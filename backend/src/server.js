@@ -5,9 +5,11 @@ import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
+import { OCRService } from './ocr.js'
 
 const prisma = new PrismaClient()
 const fastify = Fastify({ logger: true })
+const ocrService = new OCRService()
 
 // Register plugins
 await fastify.register(cors, {
@@ -741,6 +743,136 @@ fastify.get('/api/goals/progress/:id', { onRequest: [authenticate] }, async (req
     isCompleted,
     deadline: goal.deadline,
     status: isCompleted ? 'completed' : goal.status
+  }
+})
+
+// ========== OCR Routes ==========
+
+// OCR - 识别财务数据
+fastify.post('/api/ocr/finance', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { image, autoSave = false } = request.body
+
+  if (!image) {
+    return reply.code(400).send({ error: 'Image data is required' })
+  }
+
+  try {
+    const result = await ocrService.recognizeFinance(image)
+
+    // 如果识别成功且自动保存，则创建财务记录
+    if (autoSave && result.amount && result.type) {
+      const record = await prisma.financeRecord.create({
+        data: {
+          userId,
+          recordDate: result.date ? new Date(result.date) : new Date(),
+          transactionType: result.type,
+          category: result.category || '其他',
+          amount: result.amount,
+          description: result.merchant || result.description || 'OCR识别',
+          paymentMethod: result.paymentMethod || null,
+          notes: `OCR识别置信度: ${result.confidence}`
+        }
+      })
+      return { ...result, saved: true, record }
+    }
+
+    return { ...result, saved: false }
+  } catch (error) {
+    fastify.log.error('OCR Finance error:', error)
+    return reply.code(500).send({ error: error.message || 'OCR recognition failed' })
+  }
+})
+
+// OCR - 识别饮食数据
+fastify.post('/api/ocr/meal', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { image, autoSave = false } = request.body
+
+  if (!image) {
+    return reply.code(400).send({ error: 'Image data is required' })
+  }
+
+  try {
+    const result = await ocrService.recognizeMeal(image)
+
+    // 如果识别成功且自动保存，则创建饮食记录
+    if (autoSave && result.foodName) {
+      const record = await prisma.mealRecord.create({
+        data: {
+          userId,
+          mealDate: new Date(),
+          mealType: result.mealType === 'unknown' ? 'snack' : result.mealType,
+          foodName: result.foodName,
+          calories: result.calories,
+          protein: result.protein,
+          carbs: result.carbs,
+          fat: result.fat,
+          notes: `OCR识别置信度: ${result.confidence}`
+        }
+      })
+      return { ...result, saved: true, record }
+    }
+
+    return { ...result, saved: false }
+  } catch (error) {
+    fastify.log.error('OCR Meal error:', error)
+    return reply.code(500).send({ error: error.message || 'OCR recognition failed' })
+  }
+})
+
+// OCR - 识别运动数据
+fastify.post('/api/ocr/exercise', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { image, autoSave = false } = request.body
+
+  if (!image) {
+    return reply.code(400).send({ error: 'Image data is required' })
+  }
+
+  try {
+    const result = await ocrService.recognizeExercise(image)
+
+    // 如果识别成功且自动保存，则创建运动记录
+    if (autoSave && result.exerciseType && result.durationMinutes) {
+      const record = await prisma.exerciseRecord.create({
+        data: {
+          userId,
+          exerciseDate: new Date(result.date),
+          exerciseType: result.exerciseType,
+          durationMinutes: result.durationMinutes,
+          distanceKm: result.distanceKm,
+          caloriesBurned: result.caloriesBurned,
+          notes: `OCR识别置信度: ${result.confidence}`
+        }
+      })
+      return { ...result, saved: true, record }
+    }
+
+    return { ...result, saved: false }
+  } catch (error) {
+    fastify.log.error('OCR Exercise error:', error)
+    return reply.code(500).send({ error: error.message || 'OCR recognition failed' })
+  }
+})
+
+// OCR - 通用文字识别（用于预览）
+fastify.post('/api/ocr/preview', { onRequest: [authenticate] }, async (request, reply) => {
+  const { image } = request.body
+
+  if (!image) {
+    return reply.code(400).send({ error: 'Image data is required' })
+  }
+
+  try {
+    const result = await ocrService.recognizeText(image)
+    return {
+      text: result.words_result?.map(w => w.words).join('\n') || '',
+      words: result.words_result || []
+    }
+  } catch (error) {
+    fastify.log.error('OCR Preview error:', error)
+    return reply.code(500).send({ error: error.message || 'OCR recognition failed' })
   }
 })
 

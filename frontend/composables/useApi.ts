@@ -173,6 +173,7 @@ export function useApi() {
   }
 
   return {
+    fetchWithAuth,
     getHealthRecords,
     createHealthRecord,
     updateHealthRecord,
