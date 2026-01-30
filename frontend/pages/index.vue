@@ -6,7 +6,7 @@
           <div class="flex">
             <div class="flex-shrink-0 flex items-center">
               <h1 class="text-xl font-bold text-gray-900 dark:text-white">
-                Personal Tracker
+                个人追踪器
               </h1>
             </div>
             <div class="ml-6 flex space-x-8">
@@ -31,7 +31,7 @@
               @click="logout"
               class="text-sm text-red-600 hover:text-red-500"
             >
-              Logout
+              退出登录
             </button>
           </div>
         </div>
@@ -41,33 +41,33 @@
     <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div class="px-4 py-6 sm:px-0">
         <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-          Dashboard
+          仪表盘
         </h2>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <!-- Quick Stats -->
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div class="text-3xl font-bold text-blue-600 mb-2">{{ healthRecords.length }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Health Records</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">健康记录</div>
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div class="text-3xl font-bold text-green-600 mb-2">{{ mealRecords.length }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Meals Logged</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">已记录餐食</div>
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div class="text-3xl font-bold text-purple-600 mb-2">{{ exerciseRecords.length }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Workouts</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">运动记录</div>
           </div>
           <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div class="text-3xl font-bold text-orange-600 mb-2">{{ financeRecords.length }}</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Transactions</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">交易记录</div>
           </div>
         </div>
 
         <!-- Quick Actions -->
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Quick Actions
+            快捷操作
           </h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <NuxtLink
@@ -75,28 +75,28 @@
               class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
             >
               <span class="text-2xl mb-2">💪</span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">Log Health</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">记录健康</span>
             </NuxtLink>
             <NuxtLink
               to="/meals"
               class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors"
             >
               <span class="text-2xl mb-2">🍽️</span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">Log Meal</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">记录餐食</span>
             </NuxtLink>
             <NuxtLink
               to="/exercise"
               class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 transition-colors"
             >
               <span class="text-2xl mb-2">🏃</span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">Log Exercise</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">记录运动</span>
             </NuxtLink>
             <NuxtLink
               to="/finance"
               class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors"
             >
               <span class="text-2xl mb-2">💰</span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">Log Finance</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">记录财务</span>
             </NuxtLink>
           </div>
         </div>
@@ -104,7 +104,7 @@
         <!-- Goals Section -->
         <div v-if="activeGoals.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            Active Goals
+            活跃目标
           </h3>
           <div class="space-y-4">
             <div
@@ -118,7 +118,7 @@
                     {{ goal.goalType }}
                   </div>
                   <div class="text-sm text-gray-500 dark:text-gray-400">
-                    Target: {{ goal.targetValue }}
+                    目标：{{ goal.targetValue }}
                   </div>
                 </div>
                 <div class="text-right">
@@ -155,12 +155,12 @@ const financeRecords = ref([])
 const goals = ref([])
 
 const navItems = [
-  { name: 'Dashboard', to: '/', icon: '📊' },
-  { name: 'Health', to: '/health', icon: '💪' },
-  { name: 'Meals', to: '/meals', icon: '🍽️' },
-  { name: 'Exercise', to: '/exercise', icon: '🏃' },
-  { name: 'Finance', to: '/finance', icon: '💰' },
-  { name: 'Goals', to: '/goals', icon: '🎯' }
+  { name: '仪表盘', to: '/', icon: '📊' },
+  { name: '健康', to: '/health', icon: '💪' },
+  { name: '餐食', to: '/meals', icon: '🍽️' },
+  { name: '运动', to: '/exercise', icon: '🏃' },
+  { name: '财务', to: '/finance', icon: '💰' },
+  { name: '目标', to: '/goals', icon: '🎯' }
 ]
 
 const activeGoals = computed(() =>

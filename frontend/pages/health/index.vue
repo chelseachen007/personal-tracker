@@ -1,182 +1,205 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-    <div class="max-w-6xl mx-auto">
-      <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-          💪 Health Records
-        </h1>
-        <button
-          @click="showForm = true"
-          class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-        >
-          + Add Record
-        </button>
+    <div class="max-w-7xl mx-auto">
+      <!-- 页面头部 -->
+      <div class="flex flex-wrap justify-between items-center mb-6 gap-4">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+            健康记录
+          </h1>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            追踪您的体重、血压和健康指标
+          </p>
+        </div>
+        <div class="flex gap-3">
+          <button
+            @click="showForm = !showForm"
+            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            {{ showForm ? '收起' : '添加记录' }}
+          </button>
+        </div>
       </div>
 
-      <!-- Add Record Form -->
-      <div v-if="showForm" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+      <!-- 快速统计卡片 -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.latestWeight || '-' }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">最新体重</div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.avgWeight || '-' }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">平均体重</div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900 flex items-center justify-center">
+              <svg class="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white">
+                {{ stats.avgBP ? `${stats.avgBP.systolic}/${stats.avgBP.diastolic}` : '-' }}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">平均血压</div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+              <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
+            </div>
+            <div>
+              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ records.length }}</div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">总记录数</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 添加记录表单 -->
+      <div v-if="showForm" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Add Health Record
+          添加健康记录
         </h3>
         <form @submit.prevent="submitForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Date
+                日期
               </label>
               <input
                 v-model="form.recordDate"
                 type="date"
                 required
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Weight (kg)
+                体重
               </label>
               <input
                 v-model.number="form.weight"
                 type="number"
                 step="0.1"
-                placeholder="Optional"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                placeholder="可选"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Height (cm)
+                身高
               </label>
               <input
                 v-model.number="form.height"
                 type="number"
                 step="0.1"
-                placeholder="Optional"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                placeholder="可选"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Systolic BP
+                收缩压
               </label>
               <input
                 v-model.number="form.systolic"
                 type="number"
-                placeholder="Optional"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                placeholder="可选"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Diastolic BP
+                舒张压
               </label>
               <input
                 v-model.number="form.diastolic"
                 type="number"
-                placeholder="Optional"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                placeholder="可选"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Heart Rate (bpm)
+                心率
               </label>
               <input
                 v-model.number="form.heartRate"
                 type="number"
-                placeholder="Optional"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+                placeholder="可选"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Notes
+              备注
             </label>
             <textarea
               v-model="form.notes"
-              rows="3"
-              placeholder="Optional notes"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
+              rows="2"
+              placeholder="可选备注"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             ></textarea>
           </div>
           <div class="flex space-x-3">
             <button
               type="submit"
-              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
             >
-              Save
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              保存
             </button>
             <button
               type="button"
               @click="showForm = false"
-              class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500"
+              class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600"
             >
-              Cancel
+              取消
             </button>
           </div>
         </form>
       </div>
 
-      <!-- Records List -->
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead class="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Date
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Weight
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  BMI
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Blood Pressure
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Heart Rate
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              <tr v-for="record in records" :key="record.id">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {{ formatDate(record.recordDate) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {{ record.weight || '-' }} kg
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {{ calculateBMI(record) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {{ record.systolic && record.diastolic ? `${record.systolic}/${record.diastolic}` : '-' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                  {{ record.heartRate || '-' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  <button
-                    @click="deleteRecord(record.id)"
-                    class="text-red-600 hover:text-red-700"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div v-if="records.length === 0" class="p-8 text-center text-gray-500 dark:text-gray-400">
-          No health records yet. Click "Add Record" to start tracking.
-        </div>
-      </div>
+      <!-- 数据表格 -->
+      <AgDataTable
+        :column-defs="columnDefs"
+        :row-data="records"
+        :height="'500px'"
+        :pagination="true"
+        :enable-export="true"
+        @export="handleExport"
+        @refresh="loadRecords"
+      />
     </div>
   </div>
 </template>
@@ -186,6 +209,11 @@ const api = useApi()
 
 const showForm = ref(false)
 const records = ref([])
+const stats = ref({
+  latestWeight: null,
+  avgWeight: null,
+  avgBP: null
+})
 
 const form = ref({
   recordDate: new Date().toISOString().split('T')[0],
@@ -197,11 +225,89 @@ const form = ref({
   notes: ''
 })
 
+// 表格列定义
+const columnDefs = ref([
+  {
+    field: 'recordDate',
+    headerName: '日期',
+    sortable: true,
+    filter: 'agDateColumnFilter',
+    valueFormatter: (params) => formatDate(params.value)
+  },
+  {
+    field: 'weight',
+    headerName: '体重',
+    type: 'numericColumn',
+    valueFormatter: (params) => params.value ? `${params.value} kg` : '-'
+  },
+  {
+    field: 'bmi',
+    headerName: 'BMI',
+    type: 'numericColumn',
+    valueGetter: (params) => {
+      if (params.data.weight && params.data.height) {
+        const heightInM = params.data.height / 100
+        return (params.data.weight / (heightInM * heightInM)).toFixed(1)
+      }
+      return ''
+    }
+  },
+  {
+    field: 'bloodPressure',
+    headerName: '血压',
+    valueGetter: (params) => {
+      if (params.data.systolic && params.data.diastolic) {
+        return `${params.data.systolic}/${params.data.diastolic}`
+      }
+      return '-'
+    }
+  },
+  {
+    field: 'heartRate',
+    headerName: '心率',
+    type: 'numericColumn',
+    valueFormatter: (params) => params.value ? `${params.value} bpm` : '-'
+  },
+  {
+    field: 'notes',
+    headerName: '备注',
+    flex: 1
+  },
+  {
+    field: 'actions',
+    headerName: '操作',
+    sortable: false,
+    filter: false,
+    width: 100,
+    cellRenderer: (params) => {
+      return `
+        <button class="delete-btn px-2 py-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded text-sm" data-id="${params.data.id}">
+          删除
+        </button>
+      `
+    }
+  }
+])
+
 async function loadRecords() {
   try {
     records.value = await api.getHealthRecords()
+    await loadStats()
   } catch (error) {
     console.error('Failed to load records:', error)
+  }
+}
+
+async function loadStats() {
+  try {
+    const data = await api.getHealthStats()
+    stats.value = {
+      latestWeight: data.latestWeight,
+      avgWeight: data.avgWeight,
+      avgBP: data.avgBP
+    }
+  } catch (error) {
+    console.error('Failed to load stats:', error)
   }
 }
 
@@ -220,33 +326,40 @@ async function submitForm() {
     }
     await loadRecords()
   } catch (error) {
-    alert('Failed to create record: ' + error.message)
+    alert('创建记录失败: ' + error.message)
   }
 }
 
 async function deleteRecord(id) {
-  if (confirm('Are you sure you want to delete this record?')) {
+  if (confirm('确定要删除这条记录吗？')) {
     try {
       await api.deleteHealthRecord(id)
       await loadRecords()
     } catch (error) {
-      alert('Failed to delete record: ' + error.message)
+      alert('删除记录失败: ' + error.message)
     }
   }
 }
 
-function formatDate(dateStr) {
-  return new Date(dateStr).toLocaleDateString()
+function handleExport({ format }) {
+  const { exportHealthRecords } = useExport()
+  exportHealthRecords(records.value, format)
 }
 
-function calculateBMI(record) {
-  if (record.weight && record.height) {
-    const heightInM = record.height / 100
-    const bmi = record.weight / (heightInM * heightInM)
-    return bmi.toFixed(1)
-  }
-  return '-'
+function formatDate(dateStr) {
+  return new Date(dateStr).toLocaleDateString('zh-CN')
 }
+
+// 监听表格内的删除按钮点击
+onMounted(() => {
+  document.addEventListener('click', (e) => {
+    const target = e.target
+    if (target.classList.contains('delete-btn')) {
+      const id = parseInt(target.getAttribute('data-id'))
+      deleteRecord(id)
+    }
+  })
+})
 
 onMounted(() => {
   loadRecords()

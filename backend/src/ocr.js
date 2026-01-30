@@ -1,10 +1,12 @@
 // OCR Service - 支持多种 OCR 提供商
-// 使用百度 OCR、腾讯云 OCR 或其他服务
+// 使用百度 OCR、腾讯云 OCR、本地 Tesseract.js
+
+import Tesseract from 'tesseract.js'
 
 export class OCRService {
   constructor() {
     // 默认配置 - 从环境变量读取
-    this.provider = process.env.OCR_PROVIDER || 'baidu' // baidu, tencent, local
+    this.provider = process.env.OCR_PROVIDER || 'local' // baidu, tencent, local, mock
     this.apiKey = process.env.OCR_API_KEY || ''
     this.secretKey = process.env.OCR_SECRET_KEY || ''
     this.appId = process.env.OCR_APP_ID || ''
@@ -19,8 +21,11 @@ export class OCRService {
         return await this.tencentOCR(imageBase64)
       case 'local':
         return await this.localOCR(imageBase64)
+      case 'mock':
+        return await this.mockOCR(imageBase64)
       default:
-        throw new Error('Unsupported OCR provider')
+        // 如果没有配置，使用本地 OCR
+        return await this.localOCR(imageBase64)
     }
   }
 
@@ -93,11 +98,57 @@ export class OCRService {
     throw new Error('Tencent OCR not implemented yet')
   }
 
+  // 模拟 OCR - 用于测试
+  async mockOCR(imageBase64) {
+    // 模拟 OCR 返回结果，用于测试
+    return {
+      error_code: undefined,
+      error_msg: '',
+      words_result: [
+        { words: '微信支付' },
+        { words: '付款金额' },
+        { words: '¥35.80' },
+        { words: '2024-01-30 12:34:56' },
+        { words: '餐饮-美食' },
+        { words: '麦当劳餐厅' },
+        { words: '付款成功' }
+      ],
+      words_result_count: 7
+    }
+  }
+
   // 本地 Tesseract OCR
   async localOCR(imageBase64) {
-    // 本地 OCR 实现
-    // 需要: tesseract.js
-    throw new Error('Local OCR not implemented yet')
+    try {
+      // 提取 base64 数据
+      const imageData = imageBase64.split(',').pop() || imageBase64
+
+      // 使用 Tesseract.js 进行 OCR
+      const result = await Tesseract.recognize(
+        `data:image/png;base64,${imageData}`,
+        'eng+chi_sim',
+        {
+          logger: m => {
+            // 可选：记录进度
+            if (m.status === 'recognizing text') {
+              console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`)
+            }
+          }
+        }
+      )
+
+      // 转换为统一格式
+      return {
+        words_result: result.data.words.map(w => ({ words: w.text })),
+        words_result_count: result.data.words.length,
+        error_code: undefined,
+        error_msg: '',
+        confidence: result.data.confidence
+      }
+    } catch (error) {
+      console.error('Local OCR error:', error)
+      throw new Error(`Local OCR failed: ${error.message}`)
+    }
   }
 
   // ========== 专门的识别方法 ==========

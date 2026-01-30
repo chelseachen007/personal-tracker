@@ -144,7 +144,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const props = defineProps({
   type: {
     type: String,
@@ -163,7 +163,87 @@ const result = ref(null)
 const rawText = ref(null)
 const error = ref(null)
 
-const api = useApi()
+const config = useRuntimeConfig()
+const authStore = useAuthStore()
+const router = useRouter()
+
+// 用于标记是否正在处理 401 错误
+let isHandling401 = false
+
+async function fetchWithAuth(url: string, options: any = {}) {
+  try {
+    return await $fetch(`${config.public.apiBase}${url}`, {
+      ...options,
+      headers: {
+        ...options.headers,
+        Authorization: `Bearer ${authStore.token}`
+      }
+    })
+  } catch (error: any) {
+    // 处理 401 未授权错误
+    if (error?.statusCode === 401 || error?.response?.status === 401) {
+      if (!isHandling401) {
+        isHandling401 = true
+        authStore.logout()
+
+        // 存储当前路径
+        sessionStorage.setItem('returnPath', router.currentRoute.value.fullPath)
+
+        // 显示登录提示
+        showLoginPrompt()
+      }
+      throw new Error('登录已过期，请重新登录')
+    }
+    throw error
+  }
+}
+
+// 显示登录提示对话框
+function showLoginPrompt() {
+  const modal = document.createElement('div')
+  modal.id = 'login-prompt-modal'
+  modal.className = 'fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50'
+  modal.innerHTML = `
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-6 max-w-md mx-4">
+      <div class="text-center">
+        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-orange-100 dark:bg-orange-900 mb-4">
+          <svg class="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">登录已过期</h3>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+          您的登录状态已过期，请重新登录以继续使用。
+        </p>
+        <div class="flex gap-3">
+          <button id="cancel-login-btn" class="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+            稍后再说
+          </button>
+          <button id="goto-login-btn" class="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition">
+            去登录
+          </button>
+        </div>
+      </div>
+    </div>
+  `
+
+  document.body.appendChild(modal)
+
+  document.getElementById('goto-login-btn')?.addEventListener('click', () => {
+    modal.remove()
+    router.push('/login')
+  })
+
+  document.getElementById('cancel-login-btn')?.addEventListener('click', () => {
+    modal.remove()
+  })
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.remove()
+    }
+  })
+}
 
 function triggerInput() {
   if (!loading.value) {
@@ -204,9 +284,9 @@ async function recognize() {
 
   try {
     const endpoint = `/api/ocr/${props.type}`
-    const response = await api.fetchWithAuth(endpoint, {
+    const response = await fetchWithAuth(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ image: imageData.value })
+      body: { image: imageData.value }
     })
 
     result.value = response
@@ -225,9 +305,9 @@ async function saveRecord() {
 
   try {
     const endpoint = `/api/ocr/${props.type}`
-    const response = await api.fetchWithAuth(endpoint, {
+    const response = await fetchWithAuth(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ image: imageData.value, autoSave: true })
+      body: { image: imageData.value, autoSave: true }
     })
 
     result.value = response

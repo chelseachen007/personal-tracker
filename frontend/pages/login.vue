@@ -3,17 +3,17 @@
     <div class="max-w-md w-full space-y-8">
       <div>
         <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-          Personal Tracker
+          个人追踪器
         </h2>
         <p class="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-          Sign in to your account
+          登录您的账户
         </p>
       </div>
       <form class="mt-8 space-y-6" @submit.prevent="handleSubmit">
         <div class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Username
+              用户名
             </label>
             <input
               v-model="form.username"
@@ -24,7 +24,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Password
+              密码
             </label>
             <input
               v-model="form.password"
@@ -45,7 +45,7 @@
             :disabled="loading"
             class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
-            {{ loading ? 'Loading...' : isLogin ? 'Sign in' : 'Register' }}
+            {{ loading ? '加载中...' : isLogin ? '登录' : '注册' }}
           </button>
         </div>
 
@@ -55,7 +55,7 @@
             @click="toggleMode"
             class="text-blue-600 hover:text-blue-500 text-sm"
           >
-            {{ isLogin ? "Don't have an account? Register" : "Already have an account? Sign in" }}
+            {{ isLogin ? "没有账户？注册" : "已有账户？登录" }}
           </button>
         </div>
       </form>
@@ -92,9 +92,15 @@ async function handleSubmit() {
     } else {
       await authStore.register(form.value.username, form.value.password)
     }
-    await router.push('/')
+
+    // 获取存储的返回路径
+    const returnPath = sessionStorage.getItem('returnPath')
+    sessionStorage.removeItem('returnPath')
+
+    // 跳转到原页面或首页
+    await router.push(returnPath || '/')
   } catch (err) {
-    error.value = err.data?.error || err.message || 'Something went wrong'
+    error.value = err.data?.error || err.message || '出错了'
   } finally {
     loading.value = false
   }

@@ -4,31 +4,31 @@
       <div class="text-center">
         <div class="text-6xl mb-4">⚠️</div>
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-          Oops! Something went wrong
+          出错了！
         </h1>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-          {{ error?.message || 'An unexpected error occurred' }}
+          {{ error?.message || '发生了意外错误' }}
         </p>
         <div class="space-y-3">
           <button
             @click="handleError"
             class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
-            Go Home
+            返回首页
           </button>
           <button
             v-if="showDetails"
             @click="showDetails = false"
             class="w-full px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg"
           >
-            Hide Details
+            隐藏详情
           </button>
           <button
             v-else
             @click="showDetails = true"
             class="w-full px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg"
           >
-            Show Details
+            显示详情
           </button>
         </div>
         <div v-if="showDetails" class="mt-6 text-left">

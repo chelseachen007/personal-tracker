@@ -5,10 +5,10 @@
       :disabled="loading"
       class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50 flex items-center space-x-2"
     >
-      <span v-if="loading">Exporting...</span>
+      <span v-if="loading">导出中...</span>
       <span v-else class="flex items-center space-x-2">
         <span>📥</span>
-        <span>Export CSV</span>
+        <span>导出 CSV</span>
       </span>
     </button>
   </div>
@@ -83,7 +83,7 @@ async function exportCSV() {
     link.click()
     document.body.removeChild(link)
   } catch (error) {
-    alert('Failed to export data: ' + error.message)
+    alert('导出数据失败: ' + error.message)
   } finally {
     loading.value = false
   }

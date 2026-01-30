@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import jwt from '@fastify/jwt'
@@ -6,10 +7,14 @@ import swaggerUI from '@fastify/swagger-ui'
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
 import { OCRService } from './ocr.js'
+import { ExportService } from './utils/export.js'
+import FoodRecognitionService from './ai/foodRecognition.js'
 
 const prisma = new PrismaClient()
 const fastify = Fastify({ logger: true })
 const ocrService = new OCRService()
+const exportService = new ExportService()
+const foodService = new FoodRecognitionService()
 
 // Register plugins
 await fastify.register(cors, {
@@ -743,6 +748,183 @@ fastify.get('/api/goals/progress/:id', { onRequest: [authenticate] }, async (req
     isCompleted,
     deadline: goal.deadline,
     status: isCompleted ? 'completed' : goal.status
+  }
+})
+
+// ========== Export Routes ==========
+
+// 导出健康记录
+fastify.get('/api/export/health', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { startDate, endDate, format = 'xlsx' } = request.query
+
+  const where = { userId }
+  if (startDate || endDate) {
+    where.recordDate = {}
+    if (startDate) where.recordDate.gte = new Date(startDate)
+    if (endDate) where.recordDate.lte = new Date(endDate)
+  }
+
+  const records = await prisma.healthRecord.findMany({
+    where,
+    orderBy: { recordDate: 'desc' }
+  })
+
+  if (format === 'xlsx') {
+    const workbook = await exportService.exportHealthRecords(records)
+    const buffer = await workbook.xlsx.writeBuffer()
+    reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    reply.header('Content-Disposition', 'attachment; filename=health-records.xlsx')
+    return reply.send(buffer)
+  } else if (format === 'csv') {
+    const csv = exportService.exportHealthRecordsCSV(records)
+    reply.type('text/csv; charset=utf-8')
+    reply.header('Content-Disposition', 'attachment; filename=health-records.csv')
+    return csv
+  }
+})
+
+// 导出财务记录
+fastify.get('/api/export/finances', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { startDate, endDate, type, format = 'xlsx' } = request.query
+
+  const where = { userId }
+  if (startDate || endDate) {
+    where.recordDate = {}
+    if (startDate) where.recordDate.gte = new Date(startDate)
+    if (endDate) where.recordDate.lte = new Date(endDate)
+  }
+  if (type) {
+    where.transactionType = type
+  }
+
+  const records = await prisma.financeRecord.findMany({
+    where,
+    orderBy: { recordDate: 'desc' }
+  })
+
+  if (format === 'xlsx') {
+    const workbook = await exportService.exportFinanceRecords(records)
+    const buffer = await workbook.xlsx.writeBuffer()
+    reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    reply.header('Content-Disposition', 'attachment; filename=finance-records.xlsx')
+    return reply.send(buffer)
+  } else if (format === 'csv') {
+    const csv = exportService.exportFinanceRecordsCSV(records)
+    reply.type('text/csv; charset=utf-8')
+    reply.header('Content-Disposition', 'attachment; filename=finance-records.csv')
+    return csv
+  }
+})
+
+// 导出餐食记录
+fastify.get('/api/export/meals', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { startDate, endDate, format = 'xlsx' } = request.query
+
+  const where = { userId }
+  if (startDate || endDate) {
+    where.mealDate = {}
+    if (startDate) where.mealDate.gte = new Date(startDate)
+    if (endDate) where.mealDate.lte = new Date(endDate)
+  }
+
+  const records = await prisma.mealRecord.findMany({
+    where,
+    orderBy: { mealDate: 'desc' }
+  })
+
+  if (format === 'xlsx') {
+    const workbook = await exportService.exportMealRecords(records)
+    const buffer = await workbook.xlsx.writeBuffer()
+    reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    reply.header('Content-Disposition', 'attachment; filename=meal-records.xlsx')
+    return reply.send(buffer)
+  } else if (format === 'csv') {
+    const csv = exportService.exportMealRecordsCSV(records)
+    reply.type('text/csv; charset=utf-8')
+    reply.header('Content-Disposition', 'attachment; filename=meal-records.csv')
+    return csv
+  }
+})
+
+// 导出运动记录
+fastify.get('/api/export/exercises', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { startDate, endDate, format = 'xlsx' } = request.query
+
+  const where = { userId }
+  if (startDate || endDate) {
+    where.exerciseDate = {}
+    if (startDate) where.exerciseDate.gte = new Date(startDate)
+    if (endDate) where.exerciseDate.lte = new Date(endDate)
+  }
+
+  const records = await prisma.exerciseRecord.findMany({
+    where,
+    orderBy: { exerciseDate: 'desc' }
+  })
+
+  if (format === 'xlsx') {
+    const workbook = await exportService.exportExerciseRecords(records)
+    const buffer = await workbook.xlsx.writeBuffer()
+    reply.header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    reply.header('Content-Disposition', 'attachment; filename=exercise-records.xlsx')
+    return reply.send(buffer)
+  } else if (format === 'csv') {
+    const csv = exportService.exportExerciseRecordsCSV(records)
+    reply.type('text/csv; charset=utf-8')
+    reply.header('Content-Disposition', 'attachment; filename=exercise-records.csv')
+    return csv
+  }
+})
+
+// ========== AI Food Recognition Routes ==========
+
+// AI 识别食物
+fastify.post('/api/ai/recognize-food', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { image, autoSave = false } = request.body
+
+  if (!image) {
+    return reply.code(400).send({ error: 'Image data is required' })
+  }
+
+  try {
+    const result = await foodService.recognizeFood(image)
+
+    if (autoSave && result.foodName) {
+      const record = await prisma.mealRecord.create({
+        data: {
+          userId,
+          mealDate: new Date(),
+          mealType: result.mealType || 'snack',
+          foodName: result.foodName,
+          calories: result.calories,
+          protein: result.protein,
+          carbs: result.carbs,
+          fat: result.fat,
+          notes: `AI识别 - 置信度: ${(result.confidence * 100).toFixed(0)}%. ${result.description || ''}`
+        }
+      })
+      return { ...result, saved: true, record }
+    }
+
+    return { ...result, saved: false }
+  } catch (error) {
+    fastify.log.error('AI Food Recognition error:', error)
+    return reply.code(500).send({ error: error.message || 'AI recognition failed' })
+  }
+})
+
+// 检查 AI 服务状态
+fastify.get('/api/ai/status', { onRequest: [authenticate] }, async (request, reply) => {
+  const available = foodService.isAvailable()
+  return {
+    available,
+    provider: available ? 'anthropic' : null,
+    message: available ? 'AI 食物识别服务可用' : 'AI 食物识别服务未配置，请设置 ANTHROPIC_API_KEY'
   }
 })
 

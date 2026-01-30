@@ -6,13 +6,13 @@
         404
       </h1>
       <p class="text-gray-600 dark:text-gray-400 mb-8">
-        Page not found
+        页面未找到
       </p>
       <NuxtLink
         to="/"
         class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
       >
-        Go Home
+        返回首页
       </NuxtLink>
     </div>
   </div>

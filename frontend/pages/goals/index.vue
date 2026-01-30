@@ -3,41 +3,40 @@
     <div class="max-w-4xl mx-auto">
       <div class="flex justify-between items-center mb-6">
         <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
-          🎯 Goals
+          目标管理
         </h1>
         <button
           @click="showForm = true"
           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
         >
-          + New Goal
+          新建目标
         </button>
       </div>
 
-      <!-- Add Goal Form -->
       <div v-if="showForm" class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Create New Goal
+          创建新目标
         </h3>
         <form @submit.prevent="submitForm" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Goal Type
+                目标类型
               </label>
               <select
                 v-model="form.goalType"
                 required
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md dark:bg-gray-700 dark:text-white"
               >
-                <option value="weight">Target Weight (kg)</option>
-                <option value="savings">Savings Goal (¥)</option>
-                <option value="exercise_hours">Exercise Hours</option>
-                <option value="calories_burned">Calories to Burn</option>
+                <option value="weight">目标体重</option>
+                <option value="savings">储蓄目标</option>
+                <option value="exercise_hours">运动时长</option>
+                <option value="calories_burned">消耗卡路里</option>
               </select>
             </div>
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Target Value
+                目标值
               </label>
               <input
                 v-model.number="form.targetValue"
@@ -50,7 +49,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Deadline (Optional)
+              截止日期 (可选)
             </label>
             <input
               v-model="form.deadline"
@@ -63,14 +62,14 @@
               type="submit"
               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
             >
-              Create Goal
+              创建目标
             </button>
             <button
               type="button"
               @click="showForm = false"
               class="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-white rounded-lg"
             >
-              Cancel
+              取消
             </button>
           </div>
         </form>
@@ -78,7 +77,7 @@
 
       <!-- Goals List -->
       <div v-if="goals.length === 0" class="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
-        <p class="text-gray-500 dark:text-gray-400">No goals yet. Create your first goal!</p>
+        <p class="text-gray-500 dark:text-gray-400">还没有目标，创建您的第一个目标吧！</p>
       </div>
 
       <div v-else class="space-y-4">
@@ -94,7 +93,7 @@
                 {{ formatGoalType(goal.goalType) }}
               </h3>
               <p v-if="goal.deadline" class="text-sm text-gray-500 dark:text-gray-400">
-                Deadline: {{ formatDate(goal.deadline) }}
+                截止日期：{{ formatDate(goal.deadline) }}
               </p>
             </div>
             <span
@@ -105,13 +104,13 @@
                 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200': goal.status === 'paused'
               }"
             >
-              {{ goal.status }}
+              {{ formatGoalStatus(goal.status) }}
             </span>
           </div>
 
           <div class="mb-4">
             <div class="flex justify-between text-sm mb-2">
-              <span class="text-gray-600 dark:text-gray-400">Progress</span>
+              <span class="text-gray-600 dark:text-gray-400">进度</span>
               <span class="font-medium text-gray-900 dark:text-white">
                 {{ formatValue(goal.currentValue) }} / {{ formatValue(goal.targetValue) }}
                 ({{ Math.round((goal.currentValue / goal.targetValue) * 100) }}%)
@@ -136,30 +135,29 @@
               @click="updateGoalValue(goal, -1)"
               class="px-3 py-1 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
             >
-              Decrease
+              减少
             </button>
             <button
               v-if="goal.status === 'active'"
               @click="updateGoalValue(goal, 1)"
               class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded hover:bg-blue-200 dark:hover:bg-blue-800"
             >
-              Increase
+              增加
             </button>
             <button
               v-if="goal.status === 'completed'"
               @click="resetGoal(goal)"
               class="px-3 py-1 text-sm bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-200 rounded hover:bg-yellow-200 dark:hover:bg-yellow-800"
             >
-              Reset
+              重置
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Goal Suggestions -->
       <div v-if="goals.length < 3" class="mt-8 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-lg p-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          💡 Goal Suggestions
+          💡 目标建议
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button
@@ -167,24 +165,24 @@
             class="p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <div class="text-2xl mb-2">⚖️</div>
-            <div class="font-medium text-gray-900 dark:text-white">Target Weight</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Reach your ideal weight</div>
+            <div class="font-medium text-gray-900 dark:text-white">目标体重</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">达到您的理想体重</div>
           </button>
           <button
             @click="quickCreate('savings', 10000)"
             class="p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <div class="text-2xl mb-2">💰</div>
-            <div class="font-medium text-gray-900 dark:text-white">Savings Goal</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Build your emergency fund</div>
+            <div class="font-medium text-gray-900 dark:text-white">储蓄目标</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">建立您的应急基金</div>
           </button>
           <button
             @click="quickCreate('exercise_hours', 100)"
             class="p-4 bg-white dark:bg-gray-800 rounded-lg hover:shadow-md transition-shadow text-left"
           >
             <div class="text-2xl mb-2">🏃</div>
-            <div class="font-medium text-gray-900 dark:text-white">Exercise Hours</div>
-            <div class="text-sm text-gray-500 dark:text-gray-400">Stay active and fit</div>
+            <div class="font-medium text-gray-900 dark:text-white">运动时长</div>
+            <div class="text-sm text-gray-500 dark:text-gray-400">保持活力和健康</div>
           </button>
         </div>
       </div>
@@ -232,7 +230,7 @@ async function submitForm() {
     }
     await loadGoals()
   } catch (error) {
-    alert('Failed to create goal: ' + error.message)
+    alert('创建目标失败: ' + error.message)
   }
 }
 
@@ -261,12 +259,21 @@ function quickCreate(type, defaultValue) {
 
 function formatGoalType(type) {
   const types = {
-    weight: 'Target Weight',
-    savings: 'Savings Goal',
-    exercise_hours: 'Exercise Hours',
-    calories_burned: 'Calories to Burn'
+    weight: '目标体重',
+    savings: '储蓄目标',
+    exercise_hours: '运动时长',
+    calories_burned: '消耗卡路里'
   }
   return types[type] || type
+}
+
+function formatGoalStatus(status) {
+  const statuses = {
+    active: '进行中',
+    completed: '已完成',
+    paused: '已暂停'
+  }
+  return statuses[status] || status
 }
 
 function formatValue(value) {

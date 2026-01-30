@@ -20,7 +20,11 @@ export default defineNuxtConfig({
     }
   },
 
-  css: ['~/assets/css/main.css'],
+  css: [
+    '~/assets/css/main.css',
+    'ag-grid-community/styles/ag-grid.css',
+    'ag-grid-community/styles/ag-theme-quartz.css'
+  ],
 
   ssr: false
 })
