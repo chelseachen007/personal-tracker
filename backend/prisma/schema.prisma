@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:../database/tracker.db"
+}
+
+model User {
+  id           Int         @id @default(autoincrement())
+  username     String      @unique
+  passwordHash String      @map("password_hash")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  healthRecords    HealthRecord[]
+  mealRecords      MealRecord[]
+  exerciseRecords  ExerciseRecord[]
+  financeRecords   FinanceRecord[]
+  goals            Goal[]
+
+  @@map("users")
+}
+
+model HealthRecord {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  recordDate DateTime  @map("record_date")
+  weight     Float?
+  height     Float?
+  systolic   Int?
+  diastolic  Int?
+  heartRate  Int?      @map("heart_rate")
+  notes      String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordDate])
+  @@map("health_records")
+}
+
+model MealRecord {
+  id         Int       @id @default(autoincrement())
+  userId     Int       @map("user_id")
+  mealDate   DateTime  @map("meal_date")
+  mealType   String    @map("meal_type") // breakfast/lunch/dinner/snack
+  foodName   String    @map("food_name")
+  calories   Int?
+  protein    Float?
+  carbs      Float?
+  fat        Float?
+  notes      String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, mealDate])
+  @@map("meal_records")
+}
+
+model ExerciseRecord {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  exerciseDate    DateTime  @map("exercise_date")
+  exerciseType    String    @map("exercise_type") // running/cycling/swimming/weights/other
+  durationMinutes Int       @map("duration_minutes")
+  distanceKm      Float?    @map("distance_km")
+  caloriesBurned  Int?      @map("calories_burned")
+  notes           String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, exerciseDate])
+  @@map("exercise_records")
+}
+
+model FinanceRecord {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  recordDate      DateTime  @map("record_date")
+  transactionType String    @map("transaction_type") // income/expense
+  category        String
+  amount          Float
+  description     String?
+  paymentMethod   String?   @map("payment_method") // cash/card/wechat/alipay
+  notes           String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordDate])
+  @@map("finance_records")
+}
+
+model Goal {
+  id           Int       @id @default(autoincrement())
+  userId       Int       @map("user_id")
+  goalType     String    @map("goal_type") // weight/savings/exercise_hours
+  targetValue  Float     @map("target_value")
+  currentValue Float     @default(0) @map("current_value")
+  deadline     DateTime?
+  status       String    @default("active") // active/completed/paused
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, goalType])
+  @@map("goals")
+}
