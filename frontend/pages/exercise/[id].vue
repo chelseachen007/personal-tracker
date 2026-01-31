@@ -197,7 +197,13 @@
 
 <script setup>
 import L from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+
+// Import Leaflet CSS only on client side
+onMounted(() => {
+  if (import.meta.client) {
+    import('leaflet/dist/leaflet.css')
+  }
+})
 
 const route = useRoute()
 const router = useRouter()
