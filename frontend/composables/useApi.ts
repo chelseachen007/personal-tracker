@@ -261,6 +261,49 @@ export function useApi() {
     return await fetchWithAuth(`${config.public.apiBase}/api/goals/progress/${id}`)
   }
 
+  // Food Database
+  async function searchFood(query: string, page = 1, pageSize = 20) {
+    const params = new URLSearchParams({ q: query, page: page.toString(), pageSize: pageSize.toString() })
+    return await fetchWithAuth(`${config.public.apiBase}/api/food/search?${params}`)
+  }
+
+  async function getFoodByBarcode(barcode: string, refresh = false) {
+    const params = new URLSearchParams({ refresh: refresh.toString() })
+    return await fetchWithAuth(`${config.public.apiBase}/api/food/barcode/${barcode}?${params}`)
+  }
+
+  async function getFoodList(params: any = {}) {
+    const query = new URLSearchParams(params).toString()
+    return await fetchWithAuth(`${config.public.apiBase}/api/food?${query}`)
+  }
+
+  async function createCustomFood(data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/food`, {
+      method: 'POST',
+      body: data
+    })
+  }
+
+  async function updateFoodItem(id: number, data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/food/${id}`, {
+      method: 'PUT',
+      body: data
+    })
+  }
+
+  async function deleteFoodItem(id: number) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/food/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async function createMealFromFood(data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/meals/from-food`, {
+      method: 'POST',
+      body: data
+    })
+  }
+
   return {
     getToken,
     fetchWithAuth,
@@ -289,6 +332,13 @@ export function useApi() {
     createGoal,
     updateGoal,
     deleteGoal,
-    getGoalProgress
+    getGoalProgress,
+    searchFood,
+    getFoodByBarcode,
+    getFoodList,
+    createCustomFood,
+    updateFoodItem,
+    deleteFoodItem,
+    createMealFromFood
   }
 }

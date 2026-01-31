@@ -12,6 +12,14 @@
           </p>
         </div>
         <div class="flex gap-3">
+          <button @click="showFoodSelector = true"
+            class="px-4 py-2 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            食物数据库
+          </button>
           <button @click="showFoodRecognition = true"
             class="px-4 py-2 bg-gradient-to-r from-orange-500 to-pink-500 text-white rounded-lg hover:from-orange-600 hover:to-pink-600 flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,6 +174,44 @@
 
       <!-- AI 食物识别弹窗 -->
       <FoodRecognition v-if="showFoodRecognition" @close="showFoodRecognition = false" @saved="onFoodSaved" />
+
+      <!-- 食物数据库选择器弹窗 -->
+      <div v-if="showFoodSelector" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-lg">
+          <div class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+            <h2 class="text-lg font-bold text-gray-900 dark:text-white">选择食物</h2>
+            <button @click="showFoodSelector = false" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- 餐次选择 -->
+          <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">餐次</label>
+            <div class="flex gap-2">
+              <button
+                v-for="type in mealTypes"
+                :key="type.value"
+                @click="selectedMealType = type.value"
+                :class="[
+                  'px-3 py-1.5 rounded-lg text-sm font-medium transition',
+                  selectedMealType === type.value
+                    ? 'bg-green-600 text-white'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                ]"
+              >
+                {{ type.label }}
+              </button>
+            </div>
+          </div>
+
+          <div class="p-4">
+            <FoodSelector @select="onFoodSelect" @close="showFoodSelector = false" />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -175,7 +221,9 @@ const api = useApi()
 
 const showForm = ref(false)
 const showFoodRecognition = ref(false)
+const showFoodSelector = ref(false)
 const records = ref([])
+const selectedMealType = ref('breakfast')
 
 const form = ref({
   mealDate: new Date().toISOString().slice(0, 16),
@@ -195,6 +243,14 @@ const mealTypeMap = {
   dinner: '晚餐',
   snack: '加餐'
 }
+
+// 餐次类型选项
+const mealTypes = [
+  { value: 'breakfast', label: '早餐' },
+  { value: 'lunch', label: '午餐' },
+  { value: 'dinner', label: '晚餐' },
+  { value: 'snack', label: '加餐' }
+]
 
 // 表格列定义
 const columnDefs = ref([
@@ -315,6 +371,34 @@ async function deleteRecord (id) {
 function onFoodSaved (record) {
   showFoodRecognition.value = false
   loadRecords()
+}
+
+async function onFoodSelect ({ food, servings }) {
+  try {
+    const now = new Date()
+    // 计算餐食日期（根据当前时间和餐次）
+    const mealDate = new Date(now)
+    const hour = now.getHours()
+    // 根据时间智能选择餐次（可选）
+    // if (hour < 9) selectedMealType.value = 'breakfast'
+    // else if (hour < 13) selectedMealType.value = 'lunch'
+    // else if (hour < 19) selectedMealType.value = 'dinner'
+    // else selectedMealType.value = 'snack'
+
+    await api.createMealFromFood({
+      foodId: food.id,
+      mealDate: mealDate.toISOString(),
+      mealType: selectedMealType.value,
+      servings: servings,
+      notes: `${servings} × ${food.servingSize || ''}${food.servingUnit || 'g'}`
+    })
+
+    showFoodSelector.value = false
+    await loadRecords()
+  } catch (error) {
+    console.error('Failed to add meal from food:', error)
+    alert('添加餐食失败: ' + error.message)
+  }
 }
 
 function handleExport ({ format }) {

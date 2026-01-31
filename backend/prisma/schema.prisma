@@ -21,6 +21,7 @@ model User {
   goals            Goal[]
   exercisePlans    ExercisePlan[]
   equipment        Equipment[]
+  foodItems        FoodItem[]
 
   @@map("users")
 }
@@ -56,11 +57,17 @@ model MealRecord {
   fat        Float?
   notes      String?
 
+  // 关联食物数据库
+  foodItemId    Int?     @map("food_item_id") // 关联 FoodItem
+  barcode       String?  // 冗余存储条码，方便查询
+
   createdAt DateTime @default(now()) @map("created_at")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodItem FoodItem? @relation(fields: [foodItemId], references: [id])
 
   @@index([userId, mealDate])
+  @@index([userId, barcode])
   @@map("meal_records")
 }
 
@@ -205,4 +212,44 @@ model Equipment {
   @@index([userId, type])
   @@index([userId, status])
   @@map("equipment")
+}
+
+// 食物数据库：用户自定义食物 + Open Food Facts 缓存 + AI 识别结果
+model FoodItem {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @map("user_id")
+  barcode       String?  @unique // 条码（如果有）
+  name          String   // 食物名称
+  brand         String?  // 品牌
+  servingSize   Float?   @map("serving_size") // 份量
+  servingUnit   String?  @map("serving_unit") // 份量单位
+
+  // 营养信息（每份）
+  calories      Int?     // 卡路里
+  protein       Float?   // 蛋白质 (g)
+  carbs         Float?   // 碳水 (g)
+  fat           Float?   // 脂肪 (g)
+  fiber         Float?   // 纤维 (g)
+  sugar         Float?   // 糖 (g)
+  sodium        Float?   // 钠 (mg)
+
+  // 数据来源：custom/openfoodfacts/ai
+  source        String   @default("custom")
+  sourceId      String?  @map("source_id") // 外部数据源 ID
+
+  // 使用统计
+  useCount      Int      @default(0) @map("use_count")
+  lastUsedAt    DateTime? @map("last_used_at")
+
+  notes         String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mealRecords MealRecord[]
+
+  @@index([userId, barcode])
+  @@index([userId, name])
+  @@index([userId, source])
+  @@map("food_items")
 }

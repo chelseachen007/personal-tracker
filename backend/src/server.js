@@ -11,6 +11,7 @@ import { ExportService } from './utils/export.js'
 import FoodRecognitionService from './ai/foodRecognition.js'
 import FinanceRecognitionService from './ai/financeRecognition.js'
 import FileImportService from './utils/fileImport.js'
+import FoodDatabaseService from './foodDatabase.js'
 import multipart from '@fastify/multipart'
 import * as fs from 'fs/promises'
 
@@ -21,6 +22,7 @@ const exportService = new ExportService()
 const foodService = new FoodRecognitionService()
 const financeService = new FinanceRecognitionService()
 const fileImportService = new FileImportService()
+const foodDbService = new FoodDatabaseService()
 
 // Register plugins
 await fastify.register(cors, {
@@ -373,6 +375,247 @@ fastify.get('/api/meals/daily', { onRequest: [authenticate] }, async (request) =
     carbs: Math.round(stats.carbs * 10) / 10,
     fat: Math.round(stats.fat * 10) / 10
   }
+})
+
+// ========== Food Database API ==========
+
+// 根据条码查询食物（先查本地缓存，未命中则查询 OFF API）
+fastify.get('/api/food/barcode/:barcode', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { barcode } = request.params
+  const { refresh = 'false' } = request.query
+
+  // 如果不是强制刷新，先查本地数据库
+  if (refresh !== 'true') {
+    const cached = await prisma.foodItem.findFirst({
+      where: { userId, barcode }
+    })
+    if (cached) {
+      // 更新使用统计
+      await prisma.foodItem.update({
+        where: { id: cached.id },
+        data: {
+          useCount: { increment: 1 },
+          lastUsedAt: new Date()
+        }
+      })
+      return cached
+    }
+  }
+
+  // 查询 Open Food Facts API
+  try {
+    const product = await foodDbService.getByBarcode(barcode)
+
+    if (product.error) {
+      return reply.code(404).send({ error: 'Product not found', barcode })
+    }
+
+    // 缓存到本地数据库
+    const foodItem = await prisma.foodItem.create({
+      data: {
+        userId,
+        barcode: product.barcode,
+        name: product.name,
+        brand: product.brand,
+        servingSize: product.servingSize,
+        servingUnit: product.servingUnit,
+        calories: product.calories,
+        protein: product.protein,
+        carbs: product.carbs,
+        fat: product.fat,
+        fiber: product.fiber,
+        sugar: product.sugar,
+        sodium: product.sodium,
+        source: 'openfoodfacts',
+        sourceId: product.sourceId,
+        useCount: 1,
+        lastUsedAt: new Date()
+      }
+    })
+
+    return foodItem
+  } catch (error) {
+    fastify.log.error('Food barcode lookup error:', error)
+    return reply.code(500).send({ error: 'Failed to fetch product data' })
+  }
+})
+
+// 搜索食物（本地 + OFF）
+fastify.get('/api/food/search', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { q, page = 1, pageSize = 20 } = request.query
+
+  if (!q) {
+    return reply.code(400).send({ error: 'Search query is required' })
+  }
+
+  try {
+    // 先搜索本地用户自定义/缓存的食品
+    const localResults = await prisma.foodItem.findMany({
+      where: {
+        userId,
+        OR: [
+          { name: { contains: q } },
+          { brand: { contains: q } }
+        ]
+      },
+      take: 10,
+      orderBy: { useCount: 'desc' }
+    })
+
+    // 同时搜索 Open Food Facts API
+    const offResults = await foodDbService.searchFood(q, parseInt(page), parseInt(pageSize))
+
+    return {
+      local: localResults,
+      off: offResults.products || [],
+      page: offResults.page,
+      pageSize: offResults.pageSize,
+      count: offResults.count || 0
+    }
+  } catch (error) {
+    fastify.log.error('Food search error:', error)
+    return reply.code(500).send({ error: 'Search failed', message: error.message })
+  }
+})
+
+// CRUD：获取用户食物列表
+fastify.get('/api/food', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { source, search } = request.query
+
+  const where = { userId }
+  if (source) where.source = source
+  if (search) {
+    where.OR = [
+      { name: { contains: search } },
+      { brand: { contains: search } }
+    ]
+  }
+
+  const items = await prisma.foodItem.findMany({
+    where,
+    orderBy: [
+      { useCount: 'desc' },
+      { lastUsedAt: 'desc' }
+    ]
+  })
+
+  return items
+})
+
+// 创建自定义食物
+fastify.post('/api/food', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const data = request.body
+
+  const foodItem = await prisma.foodItem.create({
+    data: {
+      userId,
+      ...data,
+      source: 'custom'
+    }
+  })
+
+  return foodItem
+})
+
+// 更新食物
+fastify.put('/api/food/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+  const data = request.body
+
+  const foodItem = await prisma.foodItem.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!foodItem) {
+    return reply.code(404).send({ error: 'Food item not found' })
+  }
+
+  // 系统同步的数据不允许修改营养信息（只能修改份量等）
+  let updateData = {}
+  if (foodItem.source !== 'custom') {
+    const allowedFields = ['servingSize', 'servingUnit', 'notes']
+    for (const key of Object.keys(data)) {
+      if (allowedFields.includes(key)) {
+        updateData[key] = data[key]
+      }
+    }
+  } else {
+    updateData = data
+  }
+
+  const updated = await prisma.foodItem.update({
+    where: { id: parseInt(id) },
+    data: updateData
+  })
+
+  return updated
+})
+
+// 删除食物
+fastify.delete('/api/food/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+
+  const foodItem = await prisma.foodItem.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!foodItem) {
+    return reply.code(404).send({ error: 'Food item not found' })
+  }
+
+  await prisma.foodItem.delete({ where: { id: parseInt(id) } })
+
+  return { success: true }
+})
+
+// 根据食物 ID 快速添加餐食
+fastify.post('/api/meals/from-food', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { foodId, mealDate, mealType, servings = 1, notes } = request.body
+
+  const foodItem = await prisma.foodItem.findFirst({
+    where: { id: foodId, userId }
+  })
+
+  if (!foodItem) {
+    return reply.code(404).send({ error: 'Food item not found' })
+  }
+
+  // 计算实际营养值（基于份量）
+  const multiplier = parseFloat(servings)
+
+  const record = await prisma.mealRecord.create({
+    data: {
+      userId,
+      mealDate: new Date(mealDate || Date.now()),
+      mealType: mealType || 'snack',
+      foodName: foodItem.name,
+      barcode: foodItem.barcode,
+      foodItemId: foodItem.id,
+      calories: foodItem.calories ? Math.round(foodItem.calories * multiplier) : null,
+      protein: foodItem.protein ? parseFloat((foodItem.protein * multiplier).toFixed(1)) : null,
+      carbs: foodItem.carbs ? parseFloat((foodItem.carbs * multiplier).toFixed(1)) : null,
+      fat: foodItem.fat ? parseFloat((foodItem.fat * multiplier).toFixed(1)) : null,
+      notes: notes || `${servings} x ${foodItem.servingSize || ''}${foodItem.servingUnit || 'g'}`
+    }
+  })
+
+  // 更新食物使用统计
+  await prisma.foodItem.update({
+    where: { id: foodItem.id },
+    data: {
+      useCount: { increment: 1 },
+      lastUsedAt: new Date()
+    }
+  })
+
+  return record
 })
 
 // Exercise Records Routes
@@ -917,7 +1160,7 @@ fastify.get('/api/export/exercises', { onRequest: [authenticate] }, async (reque
 
 // ========== AI Food Recognition Routes ==========
 
-// AI 识别食物
+// AI 识别食物 - 支持数据库协同
 fastify.post('/api/ai/recognize-food', { onRequest: [authenticate] }, async (request, reply) => {
   const userId = request.user.userId
   const { image, autoSave = false } = request.body
@@ -927,26 +1170,142 @@ fastify.post('/api/ai/recognize-food', { onRequest: [authenticate] }, async (req
   }
 
   try {
-    const result = await foodService.recognizeFood(image)
+    // 1. AI 识别食物
+    const aiResult = await foodService.recognizeFood(image)
 
-    if (autoSave && result.foodName) {
+    // 2. 尝试在本地数据库查找相似名称的食物
+    const searchTerm = aiResult.foodName.substring(0, Math.min(10, aiResult.foodName.length))
+    const similar = await foodDbService.searchLocalByName(searchTerm, prisma, userId)
+
+    // 3. 初始化最终结果
+    let finalFood = { ...aiResult, source: 'ai', matchInfo: null }
+
+    // 4. 检查本地是否有精确或高度相似匹配
+    if (similar.length > 0) {
+      const match = similar.find(f =>
+        foodDbService.isNameMatch(f.name, aiResult.foodName)
+      )
+
+      if (match) {
+        // 使用本地数据库的营养值
+        finalFood = {
+          ...aiResult,
+          calories: match.calories,
+          protein: match.protein,
+          carbs: match.carbs,
+          fat: match.fat,
+          fiber: match.fiber,
+          sugar: match.sugar,
+          sodium: match.sodium,
+          source: 'database',
+          foodItemId: match.id,
+          matchInfo: {
+            matchedName: match.name,
+            confidence: 'high',
+            source: 'local'
+          }
+        }
+      }
+    }
+
+    // 5. 如果本地无匹配，尝试从 Open Food Facts 搜索
+    if (finalFood.source === 'ai') {
+      try {
+        const offResults = await foodDbService.searchFood(aiResult.foodName, 1, 5, 'zh')
+        if (offResults.products && offResults.products.length > 0) {
+          const offMatch = offResults.products[0]
+
+          // 使用 OFF 的营养值
+          finalFood = {
+            ...aiResult,
+            calories: offMatch.calories,
+            protein: offMatch.protein,
+            carbs: offMatch.carbs,
+            fat: offMatch.fat,
+            fiber: offMatch.fiber,
+            sugar: offMatch.sugar,
+            sodium: offMatch.sodium,
+            source: 'openfoodfacts',
+            offSourceId: offMatch.sourceId,
+            barcode: offMatch.barcode,
+            matchInfo: {
+              matchedName: offMatch.name,
+              confidence: 'medium',
+              source: 'openfoodfacts'
+            }
+          }
+
+          // 6. 自动缓存到本地数据库（如果有条码）
+          if (offMatch.barcode && autoSave) {
+            try {
+              await prisma.foodItem.upsert({
+                where: { barcode: offMatch.barcode },
+                update: {
+                  useCount: { increment: 1 },
+                  lastUsedAt: new Date()
+                },
+                create: {
+                  userId,
+                  barcode: offMatch.barcode,
+                  name: offMatch.name,
+                  brand: offMatch.brand,
+                  servingSize: offMatch.servingSize,
+                  servingUnit: offMatch.servingUnit,
+                  calories: offMatch.calories,
+                  protein: offMatch.protein,
+                  carbs: offMatch.carbs,
+                  fat: offMatch.fat,
+                  fiber: offMatch.fiber,
+                  sugar: offMatch.sugar,
+                  sodium: offMatch.sodium,
+                  source: 'openfoodfacts',
+                  sourceId: offMatch.sourceId,
+                  useCount: 1,
+                  lastUsedAt: new Date()
+                }
+              })
+            } catch (cacheError) {
+              // 缓存失败不影响主流程
+              fastify.log.warn('Failed to cache OFF product:', cacheError.message)
+            }
+          }
+        }
+      } catch (offError) {
+        // OFF 搜索失败，使用 AI 估算值
+        fastify.log.warn('OFF search failed, using AI estimate:', offError.message)
+      }
+    }
+
+    // 7. 如果需要自动保存
+    if (autoSave && aiResult.foodName) {
       const record = await prisma.mealRecord.create({
         data: {
           userId,
           mealDate: new Date(),
-          mealType: result.mealType || 'snack',
-          foodName: result.foodName,
-          calories: result.calories,
-          protein: result.protein,
-          carbs: result.carbs,
-          fat: result.fat,
-          notes: `AI识别 - 置信度: ${(result.confidence * 100).toFixed(0)}%. ${result.description || ''}`
+          mealType: finalFood.mealType || 'snack',
+          foodName: finalFood.foodName,
+          foodItemId: finalFood.foodItemId,
+          barcode: finalFood.barcode,
+          calories: finalFood.calories,
+          protein: finalFood.protein,
+          carbs: finalFood.carbs,
+          fat: finalFood.fat,
+          notes: `AI识别 - 来源: ${finalFood.source === 'database' ? '本地数据库' : finalFood.source === 'openfoodfacts' ? 'Open Food Facts' : 'AI估算'}. ${finalFood.matchInfo ? `匹配: ${finalFood.matchInfo.matchedName}` : ''} 置信度: ${(aiResult.confidence * 100).toFixed(0)}%. ${finalFood.description || ''}`
         }
       })
-      return { ...result, saved: true, record }
+
+      // 更新食物使用统计
+      if (finalFood.foodItemId) {
+        await prisma.foodItem.update({
+          where: { id: finalFood.foodItemId },
+          data: { useCount: { increment: 1 }, lastUsedAt: new Date() }
+        })
+      }
+
+      return { ...finalFood, saved: true, record }
     }
 
-    return { ...result, saved: false }
+    return { ...finalFood, saved: false }
   } catch (error) {
     fastify.log.error('AI Food Recognition error:', error)
     return reply.code(500).send({ error: error.message || 'AI recognition failed' })
