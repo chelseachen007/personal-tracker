@@ -19,6 +19,8 @@ model User {
   exerciseRecords  ExerciseRecord[]
   financeRecords   FinanceRecord[]
   goals            Goal[]
+  exercisePlans    ExercisePlan[]
+  equipment        Equipment[]
 
   @@map("users")
 }
@@ -72,11 +74,44 @@ model ExerciseRecord {
   caloriesBurned  Int?      @map("calories_burned")
   notes           String?
 
+  // 配速和速度
+  avgPace         Float?    @map("avg_pace")         // 平均配速 (min/km)
+  maxSpeed        Float?    @map("max_speed")        // 最大速度 (km/h)
+
+  // 海拔数据
+  maxElevation    Float?    @map("max_elevation")    // 最高海拔 (m)
+  minElevation    Float?    @map("min_elevation")    // 最低海拔 (m)
+  totalClimb      Float?    @map("total_climb")      // 累计爬升 (m)
+  totalDescent    Float?    @map("total_descent")    // 累计下降 (m)
+
+  // 心率数据 (未来扩展)
+  avgHeartRate    Int?      @map("avg_heart_rate")   // 平均心率
+  maxHeartRate    Int?      @map("max_heart_rate")   // 最大心率
+
+  // 步频 (步/分钟)
+  cadence         Int?
+
+  // 装备和标签
+  equipment       String?                         // 装备名称（兼容旧数据）
+  equipmentId     Int?        @map("equipment_id") // 装备ID
+  tags            String?                          // JSON array of tags
+  device          String?                          // 设备来源
+
+  // 轨迹数据
+  trackPoints     String?                          // JSON array of GPS points
+
+  // 关联
+  planId       Int?       @map("plan_id")
+  plan         ExercisePlan? @relation("PlanRecords", fields: [planId], references: [id])
+  equipmentRel Equipment?   @relation("EquipmentRecords", fields: [equipmentId], references: [id])
+
   createdAt DateTime @default(now()) @map("created_at")
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, exerciseDate])
+  @@index([planId])
+  @@index([equipmentId])
   @@map("exercise_records")
 }
 
@@ -113,4 +148,52 @@ model Goal {
 
   @@index([userId, goalType])
   @@map("goals")
+}
+
+model ExercisePlan {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  name        String
+  description String?
+  type        String    // running, cycling, weights, other
+  frequency   Int       // 每周次数
+  startDate   DateTime  @map("start_date")
+  endDate     DateTime? @map("end_date")
+  targetValue  Float?    @map("target_value") // 目标值（如每周距离、时长）
+  unit        String?   // 单位（km, hours, minutes）
+  status      String    @default("active") // active/completed/paused
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  records ExerciseRecord[] @relation("PlanRecords")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@map("exercise_plans")
+}
+
+model Equipment {
+  id          Int       @id @default(autoincrement())
+  userId      Int       @map("user_id")
+  name        String    // 装备名称（如 Salomon Ultra 3）
+  type        String    // 跑鞋、自行车、心率带等
+  brand       String?   // 品牌
+  model       String?   // 型号
+  purchaseDate DateTime? @map("purchase_date")
+  purchasePrice Float?   @map("purchase_price")
+  totalDistance Float     @default(0) @map("total_distance") // 累计距离 km
+  totalHours   Float     @default(0) @map("total_hours") // 累计时长小时
+  status      String    @default("active") // active/retired/sold
+  notes       String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  records ExerciseRecord[] @relation("EquipmentRecords")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([userId, status])
+  @@map("equipment")
 }

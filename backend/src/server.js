@@ -9,12 +9,18 @@ import bcrypt from 'bcryptjs'
 import { OCRService } from './ocr.js'
 import { ExportService } from './utils/export.js'
 import FoodRecognitionService from './ai/foodRecognition.js'
+import FinanceRecognitionService from './ai/financeRecognition.js'
+import FileImportService from './utils/fileImport.js'
+import multipart from '@fastify/multipart'
+import * as fs from 'fs/promises'
 
 const prisma = new PrismaClient()
 const fastify = Fastify({ logger: true })
 const ocrService = new OCRService()
 const exportService = new ExportService()
 const foodService = new FoodRecognitionService()
+const financeService = new FinanceRecognitionService()
+const fileImportService = new FileImportService()
 
 // Register plugins
 await fastify.register(cors, {
@@ -23,6 +29,13 @@ await fastify.register(cors, {
 
 await fastify.register(jwt, {
   secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+})
+
+await fastify.register(multipart, {
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB
+  },
+  sharedSchemaId: 'multipart_schema'
 })
 
 // Swagger documentation
@@ -918,13 +931,57 @@ fastify.post('/api/ai/recognize-food', { onRequest: [authenticate] }, async (req
   }
 })
 
+// AI 识别财务记录（微信/支付宝截图）
+fastify.post('/api/ai/recognize-finance', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { image, autoSave = false } = request.body
+
+  if (!image) {
+    return reply.code(400).send({ error: 'Image data is required' })
+  }
+
+  try {
+    const result = await financeService.recognizePayment(image)
+
+    // 检查结果是否是数组（多条记录）
+    const records = Array.isArray(result) ? result : [result]
+
+    if (autoSave && records.length > 0) {
+      const savedRecords = []
+      for (const record of records) {
+        if (record.amount > 0) {
+          const saved = await prisma.financeRecord.create({
+            data: {
+              userId,
+              recordDate: record.recordDate,
+              transactionType: record.transactionType,
+              category: record.category,
+              amount: record.amount,
+              description: record.description,
+              paymentMethod: record.paymentMethod,
+              notes: `AI识别 - 置信度: ${(record.confidence * 100).toFixed(0)}%`
+            }
+          })
+          savedRecords.push(saved)
+        }
+      }
+      return { count: savedRecords.length, records: savedRecords, saved: true }
+    }
+
+    return { count: records.length, records, saved: false }
+  } catch (error) {
+    fastify.log.error('AI Finance Recognition error:', error)
+    return reply.code(500).send({ error: error.message || 'AI recognition failed' })
+  }
+})
+
 // 检查 AI 服务状态
 fastify.get('/api/ai/status', { onRequest: [authenticate] }, async (request, reply) => {
   const available = foodService.isAvailable()
   return {
     available,
-    provider: available ? 'anthropic' : null,
-    message: available ? 'AI 食物识别服务可用' : 'AI 食物识别服务未配置，请设置 ANTHROPIC_API_KEY'
+    provider: available ? 'zhipu' : null,
+    message: available ? 'AI 识别服务可用' : 'AI 识别服务未配置，请设置 GLM_API_KEY'
   }
 })
 
@@ -1055,6 +1112,334 @@ fastify.post('/api/ocr/preview', { onRequest: [authenticate] }, async (request, 
   } catch (error) {
     fastify.log.error('OCR Preview error:', error)
     return reply.code(500).send({ error: error.message || 'OCR recognition failed' })
+  }
+})
+
+// ========== Exercise Plan Routes ==========
+
+fastify.get('/api/exercise-plans', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { status } = request.query
+
+  const where = { userId }
+  if (status) {
+    where.status = status
+  }
+
+  const plans = await prisma.exercisePlan.findMany({
+    where,
+    orderBy: { createdAt: 'desc' }
+  })
+
+  return plans
+})
+
+fastify.post('/api/exercise-plans', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { name, description, type, frequency, startDate, endDate, targetValue, unit } = request.body
+
+  const plan = await prisma.exercisePlan.create({
+    data: {
+      userId,
+      name,
+      description,
+      type,
+      frequency,
+      startDate: new Date(startDate),
+      endDate: endDate ? new Date(endDate) : null,
+      targetValue: targetValue ? parseFloat(targetValue) : null,
+      unit
+    }
+  })
+
+  return plan
+})
+
+fastify.put('/api/exercise-plans/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+  const data = request.body
+
+  const plan = await prisma.exercisePlan.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!plan) {
+    return reply.code(404).send({ error: 'Plan not found' })
+  }
+
+  const updateData = {}
+  if (data.name) updateData.name = data.name
+  if (data.description !== undefined) updateData.description = data.description
+  if (data.type) updateData.type = data.type
+  if (data.frequency !== undefined) updateData.frequency = parseInt(data.frequency)
+  if (data.startDate) updateData.startDate = new Date(data.startDate)
+  if (data.endDate !== undefined) updateData.endDate = data.endDate ? new Date(data.endDate) : null
+  if (data.targetValue !== undefined) updateData.targetValue = data.targetValue ? parseFloat(data.targetValue) : null
+  if (data.unit !== undefined) updateData.unit = data.unit
+  if (data.status) updateData.status = data.status
+
+  const updated = await prisma.exercisePlan.update({
+    where: { id: parseInt(id) },
+    data: updateData
+  })
+
+  return updated
+})
+
+fastify.delete('/api/exercise-plans/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+
+  const plan = await prisma.exercisePlan.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!plan) {
+    return reply.code(404).send({ error: 'Plan not found' })
+  }
+
+  await prisma.exercisePlan.delete({ where: { id: parseInt(id) } })
+
+  return { success: true }
+})
+
+fastify.get('/api/exercise-plans/:id/progress', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+
+  const plan = await prisma.exercisePlan.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!plan) {
+    return reply.code(404).send({ error: 'Plan not found' })
+  }
+
+  // Get records for this plan within the current week
+  const now = new Date()
+  const weekStart = new Date(now)
+  weekStart.setDate(now.getDate() - now.getDay())
+  weekStart.setHours(0, 0, 0, 0)
+
+  const records = await prisma.exerciseRecord.findMany({
+    where: {
+      userId,
+      planId: parseInt(id),
+      exerciseDate: {
+        gte: weekStart
+      }
+    }
+  })
+
+  const weekCount = records.length
+  const totalDistance = records.reduce((sum, r) => sum + (r.distanceKm || 0), 0)
+  const totalDuration = records.reduce((sum, r) => sum + r.durationMinutes, 0)
+
+  return {
+    planId: plan.id,
+    planName: plan.name,
+    targetFrequency: plan.frequency,
+    currentFrequency: weekCount,
+    frequencyProgress: Math.min((weekCount / plan.frequency) * 100, 100),
+    targetValue: plan.targetValue,
+    currentValue: plan.unit === 'km' ? totalDistance : (plan.unit === 'hours' ? totalDuration / 60 : weekCount),
+    unit: plan.unit || 'times'
+  }
+})
+
+// ========== Equipment Routes ==========
+
+fastify.get('/api/equipment', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { type, status } = request.query
+
+  const where = { userId }
+  if (type) where.type = type
+  if (status) where.status = status
+
+  const equipment = await prisma.equipment.findMany({
+    where,
+    orderBy: { createdAt: 'desc' }
+  })
+
+  return equipment
+})
+
+fastify.post('/api/equipment', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { name, type, brand, model, purchaseDate, purchasePrice, notes } = request.body
+
+  const equipment = await prisma.equipment.create({
+    data: {
+      userId,
+      name,
+      type,
+      brand,
+      model,
+      purchaseDate: purchaseDate ? new Date(purchaseDate) : null,
+      purchasePrice: purchasePrice ? parseFloat(purchasePrice) : null,
+      notes
+    }
+  })
+
+  return equipment
+})
+
+fastify.put('/api/equipment/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+  const data = request.body
+
+  const equipment = await prisma.equipment.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!equipment) {
+    return reply.code(404).send({ error: 'Equipment not found' })
+  }
+
+  const updateData = {}
+  if (data.name) updateData.name = data.name
+  if (data.type) updateData.type = data.type
+  if (data.brand !== undefined) updateData.brand = data.brand
+  if (data.model !== undefined) updateData.model = data.model
+  if (data.purchaseDate !== undefined) updateData.purchaseDate = data.purchaseDate ? new Date(data.purchaseDate) : null
+  if (data.purchasePrice !== undefined) updateData.purchasePrice = data.purchasePrice ? parseFloat(data.purchasePrice) : null
+  if (data.status) updateData.status = data.status
+  if (data.notes !== undefined) updateData.notes = data.notes
+
+  const updated = await prisma.equipment.update({
+    where: { id: parseInt(id) },
+    data: updateData
+  })
+
+  return updated
+})
+
+fastify.delete('/api/equipment/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+
+  const equipment = await prisma.equipment.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!equipment) {
+    return reply.code(404).send({ error: 'Equipment not found' })
+  }
+
+  await prisma.equipment.delete({ where: { id: parseInt(id) } })
+
+  return { success: true }
+})
+
+fastify.get('/api/equipment/:id/usage', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+
+  const equipment = await prisma.equipment.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!equipment) {
+    return reply.code(404).send({ error: 'Equipment not found' })
+  }
+
+  // Get records using this equipment
+  const records = await prisma.exerciseRecord.findMany({
+    where: {
+      userId,
+      equipmentId: parseInt(id)
+    },
+    orderBy: { exerciseDate: 'desc' },
+    take: 50 // Last 50 uses
+  })
+
+  return {
+    equipmentId: equipment.id,
+    equipmentName: equipment.name,
+    totalDistance: equipment.totalDistance,
+    totalHours: equipment.totalHours,
+    useCount: records.length,
+    recentUses: records
+  }
+})
+
+// ========== File Import Routes ==========
+
+// 上传并解析运动文件（KML/TCX/GPX）
+fastify.post('/api/exercises/import', {
+  onRequest: [authenticate]
+}, async (request, reply) => {
+  const userId = request.user.userId
+  const file = request.body.file
+
+  if (!file) {
+    return reply.code(400).send({ error: 'No file uploaded' })
+  }
+
+  try {
+    // Get file extension
+    const filename = file.filename
+    const ext = filename.split('.').pop().toLowerCase()
+
+    if (['kml', 'gpx', 'tcx'].indexOf(ext) === -1) {
+      return reply.code(400).send({ error: 'Unsupported file type. Please upload .kml, .gpx, or .tcx files' })
+    }
+
+    // Parse the file content directly
+    const fileContent = await fs.readFile(file.filepath, 'utf-8')
+    const fileData = await fileImportService.importFileContent(fileContent, ext)
+
+    // Create exercise record
+    const record = await prisma.exerciseRecord.create({
+      data: {
+        userId,
+        exerciseDate: fileData.date,
+        exerciseType: fileData.type,
+        durationMinutes: fileData.durationMinutes,
+        distanceKm: fileData.distanceKm,
+        caloriesBurned: fileData.caloriesBurned,
+        avgPace: fileData.avgPace,
+        maxSpeed: fileData.maxSpeed,
+        maxElevation: fileData.maxElevation,
+        minElevation: fileData.minElevation,
+        totalClimb: fileData.totalClimb,
+        totalDescent: fileData.totalDescent,
+        trackPoints: JSON.stringify(fileData.trackPoints),
+        notes: fileData.notes,
+        // equipment and planId can be set later via update
+      }
+    })
+
+    return {
+      message: 'Exercise imported successfully',
+      record: {
+        id: record.id,
+        userId: record.userId,
+        exerciseDate: record.exerciseDate,
+        exerciseType: record.exerciseType,
+        durationMinutes: record.durationMinutes,
+        distanceKm: record.distanceKm,
+        caloriesBurned: record.caloriesBurned,
+        avgPace: record.avgPace,
+        maxSpeed: record.maxSpeed,
+        maxElevation: record.maxElevation,
+        minElevation: record.minElevation,
+        totalClimb: record.totalClimb,
+        totalDescent: record.totalDescent,
+        notes: record.notes,
+        createdAt: record.createdAt
+      },
+      trackData: {
+        name: fileData.name,
+        trackPoints: fileData.trackPoints // For map visualization
+      }
+    }
+  } catch (error) {
+    fastify.log.error('File import error:', error)
+    return reply.code(500).send({ error: error.message || 'File import failed' })
   }
 })
 

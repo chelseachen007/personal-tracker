@@ -21,6 +21,11 @@ export function useApi() {
   const authStore = useAuthStore()
   const router = useRouter()
 
+  // 获取 token（供外部使用）
+  function getToken() {
+    return authStore.token
+  }
+
   // 显示登录提示对话框
   function showLoginPrompt() {
     if (isHandling401) return
@@ -257,6 +262,7 @@ export function useApi() {
   }
 
   return {
+    getToken,
     fetchWithAuth,
     getHealthRecords,
     createHealthRecord,

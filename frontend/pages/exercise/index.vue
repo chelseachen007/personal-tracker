@@ -11,7 +11,33 @@
             追踪您的锻炼和身体活动
           </p>
         </div>
-        <div class="flex gap-3">
+      </div>
+
+      <!-- 标签页 -->
+      <div class="bg-white dark:bg-gray-800 rounded-lg p-1 mb-6">
+        <div class="flex gap-1">
+          <button
+            v-for="tab in tabs"
+            :key="tab.id"
+            @click="activeTab = tab.id"
+            class="flex-1 px-4 py-2 rounded-md text-sm font-medium transition-colors"
+            :class="{
+              'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300': activeTab === tab.id,
+              'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white': activeTab !== tab.id
+            }"
+          >
+            <div class="flex items-center justify-center gap-2">
+              <span v-html="tab.icon"></span>
+              {{ tab.label }}
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- 运动记录标签 -->
+      <div v-if="activeTab === 'records'">
+        <!-- 按钮组 -->
+        <div class="flex gap-3 mb-6">
           <button @click="showForm = !showForm"
             class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -19,156 +45,125 @@
             </svg>
             {{ showForm ? '收起' : '添加运动' }}
           </button>
+          <button @click="showImport = !showImport"
+            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-8v12" />
+            </svg>
+            {{ showImport ? '收起导入' : '导入文件' }}
+          </button>
         </div>
+
+        <!-- 添加运动表单 -->
+        <div v-if="showForm" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            添加运动记录
+          </h3>
+          <form @submit.prevent="submitForm" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  日期
+                </label>
+                <input v-model="form.exerciseDate" type="date" required
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  运动类型
+                </label>
+                <select v-model="form.exerciseType" required
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <option value="running">跑步</option>
+                  <option value="cycling">骑行</option>
+                  <option value="swimming">游泳</option>
+                  <option value="weights">力量训练</option>
+                  <option value="yoga">瑜伽</option>
+                  <option value="walking">步行</option>
+                  <option value="hiit">HIIT</option>
+                  <option value="jumping">跳绳</option>
+                  <option value="other">其他</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  时长 (分钟)
+                </label>
+                <input v-model.number="form.durationMinutes" type="number" required min="1"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  距离
+                </label>
+                <input v-model.number="form.distanceKm" type="number" step="0.01" placeholder="可选"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  消耗卡路里
+                </label>
+                <input v-model.number="form.caloriesBurned" type="number" placeholder="可选"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                备注
+              </label>
+              <textarea v-model="form.notes" rows="2" placeholder="感觉怎么样？"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
+            </div>
+            <div class="flex space-x-3">
+              <button type="submit"
+                class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                保存
+              </button>
+              <button type="button" @click="showForm = false"
+                class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                取消
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 文件导入 -->
+        <div v-if="showImport" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+            导入运动文件
+          </h3>
+          <ExerciseImport @imported="handleImported" />
+        </div>
+
+        <!-- 运动日历 -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <ExerciseHeatmap />
+        </div>
+
+        <!-- 个人最佳记录 -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+          <PersonalBests />
+        </div>
+
+        <!-- 数据表格 -->
+        <AgDataTable :column-defs="columnDefs" :row-data="records" :height="'500px'" :pagination="true"
+          :enable-export="true" @export="handleExport" @refresh="loadRecords" />
       </div>
 
-      <!-- 统计卡片 -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-              <svg class="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.totalDuration }} min</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">总时长</div>
-            </div>
-          </div>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center">
-              <svg class="w-5 h-5 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
-              </svg>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.totalCalories }}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">消耗卡路里</div>
-            </div>
-          </div>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center">
-              <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ stats.monthlyDuration }} min</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">本月运动</div>
-            </div>
-          </div>
-        </div>
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
-              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor"
-                viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <div>
-              <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ records.length }}</div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">总运动次数</div>
-            </div>
-          </div>
-        </div>
+      <!-- 训练计划标签 -->
+      <div v-if="activeTab === 'plans'">
+        <ExercisePlans />
       </div>
 
-      <!-- 添加运动表单 -->
-      <div v-if="showForm" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
-        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          添加运动记录
-        </h3>
-        <form @submit.prevent="submitForm" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                日期
-              </label>
-              <input v-model="form.exerciseDate" type="date" required
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                运动类型
-              </label>
-              <select v-model="form.exerciseType" required
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
-                <option value="running">跑步</option>
-                <option value="cycling">骑行</option>
-                <option value="swimming">游泳</option>
-                <option value="weights">力量训练</option>
-                <option value="yoga">瑜伽</option>
-                <option value="walking">步行</option>
-                <option value="hiit">HIIT</option>
-                <option value="jumping">跳绳</option>
-                <option value="other">其他</option>
-              </select>
-            </div>
-          </div>
-          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                时长 (分钟)
-              </label>
-              <input v-model.number="form.durationMinutes" type="number" required min="1"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                距离
-              </label>
-              <input v-model.number="form.distanceKm" type="number" step="0.01" placeholder="可选"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                消耗卡路里
-              </label>
-              <input v-model.number="form.caloriesBurned" type="number" placeholder="可选"
-                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
-            </div>
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              备注
-            </label>
-            <textarea v-model="form.notes" rows="2" placeholder="感觉怎么样？"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"></textarea>
-          </div>
-          <div class="flex space-x-3">
-            <button type="submit"
-              class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-              </svg>
-              保存
-            </button>
-            <button type="button" @click="showForm = false"
-              class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
-              取消
-            </button>
-          </div>
-        </form>
+      <!-- 装备追踪标签 -->
+      <div v-if="activeTab === 'equipment'">
+        <EquipmentTracker />
       </div>
-
-      <!-- 数据表格 -->
-      <AgDataTable :column-defs="columnDefs" :row-data="records" :height="'500px'" :pagination="true"
-        :enable-export="true" @export="handleExport" @refresh="loadRecords" />
     </div>
   </div>
 </template>
@@ -176,13 +171,33 @@
 <script setup>
 const api = useApi()
 
+const activeTab = ref('records')
 const showForm = ref(false)
+const showImport = ref(false)
 const records = ref([])
 const stats = ref({
   totalDuration: 0,
   totalCalories: 0,
   monthlyDuration: 0
 })
+
+const tabs = [
+  {
+    id: 'records',
+    label: '运动记录',
+    icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+  },
+  {
+    id: 'plans',
+    label: '训练计划',
+    icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>'
+  },
+  {
+    id: 'equipment',
+    label: '装备追踪',
+    icon: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>'
+  }
+]
 
 const form = ref({
   exerciseDate: new Date().toISOString().split('T')[0],
@@ -237,6 +252,12 @@ const columnDefs = ref([
     valueFormatter: (params) => params.value ? `${params.value} km` : '-'
   },
   {
+    field: 'avgPace',
+    headerName: '配速',
+    type: 'numericColumn',
+    valueFormatter: (params) => params.value ? formatPace(params.value) : '-'
+  },
+  {
     field: 'caloriesBurned',
     headerName: '消耗',
     type: 'numericColumn',
@@ -252,12 +273,17 @@ const columnDefs = ref([
     headerName: '操作',
     sortable: false,
     filter: false,
-    width: 100,
+    width: 150,
     cellRenderer: (params) => {
       return `
-        <button class="delete-btn px-2 py-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded text-sm" data-id="${params.data.id}">
-          删除
-        </button>
+        <div class="flex gap-2">
+          <button class="view-btn px-2 py-1 text-purple-600 hover:text-purple-700 hover:bg-purple-50 rounded text-sm" data-id="${params.data.id}">
+            查看
+          </button>
+          <button class="delete-btn px-2 py-1 text-red-600 hover:text-red-700 hover:bg-red-50 rounded text-sm" data-id="${params.data.id}">
+            删除
+          </button>
+        </div>
       `
     }
   }
@@ -314,6 +340,12 @@ async function deleteRecord (id) {
   }
 }
 
+function handleImported (record) {
+  // 导入成功后刷新数据列表
+  loadRecords()
+  showImport.value = false
+}
+
 function handleExport ({ format }) {
   const { exportExerciseRecords } = useExport()
   exportExerciseRecords(records.value, format)
@@ -323,10 +355,24 @@ function formatDate (dateStr) {
   return new Date(dateStr).toLocaleDateString('zh-CN')
 }
 
-// 监听表格内的删除按钮点击
+function formatPace (pace) {
+  const mins = Math.floor(pace)
+  const secs = Math.round((pace - mins) * 60)
+  return `${mins}'${secs.toString().padStart(2, '0')}" /km`
+}
+
+// 监听表格内的按钮点击
 onMounted(() => {
   document.addEventListener('click', (e) => {
     const target = e.target
+
+    // 查看按钮
+    if (target.classList.contains('view-btn')) {
+      const id = parseInt(target.getAttribute('data-id'))
+      navigateTo(`/exercise/${id}`)
+    }
+
+    // 删除按钮
     if (target.classList.contains('delete-btn')) {
       const id = parseInt(target.getAttribute('data-id'))
       deleteRecord(id)

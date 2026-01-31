@@ -1,7 +1,7 @@
 FROM node:22-alpine
 
-# Install wget for healthcheck
-RUN apk add --no-cache wget
+# Install wget and openssl for Prisma
+RUN apk add --no-cache wget openssl
 
 WORKDIR /app
 

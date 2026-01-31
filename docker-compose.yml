@@ -10,6 +10,8 @@ services:
     volumes:
       - ./database:/app/database
       - ./backend/prisma:/app/prisma
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
@@ -24,8 +26,10 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NUXT_PUBLIC_API_BASE_URL=${API_BASE_URL:-http://localhost:3001}
     ports:
-      - "3000:3000"
+      - "7003:3000"
     environment:
       - NUXT_PUBLIC_API_BASE_URL=${API_BASE_URL:-http://localhost:3001}
     depends_on:
