@@ -22,6 +22,8 @@ model User {
   exercisePlans    ExercisePlan[]
   equipment        Equipment[]
   foodItems        FoodItem[]
+  sleepRecords     SleepRecord[]
+  moodRecords      MoodRecord[]
 
   @@map("users")
 }
@@ -252,4 +254,71 @@ model FoodItem {
   @@index([userId, name])
   @@index([userId, source])
   @@map("food_items")
+}
+
+// 睡眠记录
+model SleepRecord {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  sleepDate       DateTime  @map("sleep_date")      // 睡眠日期（通常是醒来的日期）
+
+  // 时间信息
+  bedTime         DateTime? @map("bed_time")        // 入睡时间
+  wakeTime        DateTime? @map("wake_time")       // 醒来时间
+  durationHours   Float?    @map("duration_hours")  // 睡眠时长（小时）
+
+  // 睡眠质量
+  quality         Int?                          // 睡眠质量 1-5 (1=很差, 5=很好)
+  interruptions   Int?      @default(0)          // 夜间醒来次数
+  timeToFallAsleep Int?     @map("time_to_fall_asleep") // 入睡所需时间（分钟）
+
+  // 睡前状态
+  moodBeforeSleep String?   @map("mood_before_sleep") // 睡前心情
+
+  // 醒后状态
+  moodUponWaking  String?   @map("mood_upon_waking")  // 醒来时心情
+  energyLevel     Int?      @map("energy_level")      // 醒来精力水平 1-5
+
+  // 睡眠标签
+  tags            String?                               // JSON数组: ["late", "caffeine", "alcohol", "exercise"]
+
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sleepDate])
+  @@map("sleep_records")
+}
+
+// 心情记录
+model MoodRecord {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @map("user_id")
+  recordDate      DateTime  @map("record_date")    // 记录日期
+
+  // 核心情绪评分
+  mood            Int                             // 整体心情 1-5 (1=很差, 5=很好)
+  energy          Int?                            // 精力水平 1-5
+  stress          Int?                            // 压力水平 1-5 (1=无压力, 5=压力很大)
+
+  // 情绪标签（多选）
+  moodTags        String?   @map("mood_tags")     // JSON数组: ["happy", "anxious", "calm", "excited", "tired", "motivated"]
+
+  // 身体状态
+  physicalState   Int?      @map("physical_state") // 身体状态 1-5 (1=很不舒服, 5=很舒服)
+
+  // 活动记录
+  activities      String?                         // JSON数组: ["exercise", "work", "social", "relax"]
+
+  // 天气影响
+  weather         String?                         // 当天天气
+
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordDate])
+  @@map("mood_records")
 }

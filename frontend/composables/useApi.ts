@@ -304,6 +304,71 @@ export function useApi() {
     })
   }
 
+  // Sleep Records
+  async function getSleepRecords(params: any = {}) {
+    const query = new URLSearchParams(params).toString()
+    return await fetchWithAuth(`${config.public.apiBase}/api/sleep?${query}`)
+  }
+
+  async function createSleepRecord(data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/sleep`, {
+      method: 'POST',
+      body: data
+    })
+  }
+
+  async function updateSleepRecord(id: number, data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/sleep/${id}`, {
+      method: 'PUT',
+      body: data
+    })
+  }
+
+  async function deleteSleepRecord(id: number) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/sleep/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async function getSleepStats(days: number = 30) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/sleep/stats?days=${days}`)
+  }
+
+  // Mood Records
+  async function getMoodRecords(params: any = {}) {
+    const query = new URLSearchParams(params).toString()
+    return await fetchWithAuth(`${config.public.apiBase}/api/mood?${query}`)
+  }
+
+  async function createMoodRecord(data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/mood`, {
+      method: 'POST',
+      body: data
+    })
+  }
+
+  async function updateMoodRecord(id: number, data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/mood/${id}`, {
+      method: 'PUT',
+      body: data
+    })
+  }
+
+  async function deleteMoodRecord(id: number) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/mood/${id}`, {
+      method: 'DELETE'
+    })
+  }
+
+  async function getMoodStats(days: number = 30) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/mood/stats?days=${days}`)
+  }
+
+  // Wellness Correlation
+  async function getWellnessCorrelation(days: number = 30) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/wellness/correlation?days=${days}`)
+  }
+
   return {
     getToken,
     fetchWithAuth,
@@ -339,6 +404,17 @@ export function useApi() {
     createCustomFood,
     updateFoodItem,
     deleteFoodItem,
-    createMealFromFood
+    createMealFromFood,
+    getSleepRecords,
+    createSleepRecord,
+    updateSleepRecord,
+    deleteSleepRecord,
+    getSleepStats,
+    getMoodRecords,
+    createMoodRecord,
+    updateMoodRecord,
+    deleteMoodRecord,
+    getMoodStats,
+    getWellnessCorrelation
   }
 }

@@ -69,7 +69,7 @@
           <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             快捷操作
           </h3>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
             <NuxtLink
               to="/health"
               class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
@@ -97,6 +97,13 @@
             >
               <span class="text-2xl mb-2">💰</span>
               <span class="text-sm text-gray-700 dark:text-gray-300">记录财务</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/wellness"
+              class="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors"
+            >
+              <span class="text-2xl mb-2">😊</span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">睡眠心情</span>
             </NuxtLink>
           </div>
         </div>
@@ -160,6 +167,7 @@ const navItems = [
   { name: '餐食', to: '/meals', icon: '🍽️' },
   { name: '运动', to: '/exercise', icon: '🏃' },
   { name: '财务', to: '/finance', icon: '💰' },
+  { name: '心情', to: '/wellness', icon: '😊' },
   { name: '目标', to: '/goals', icon: '🎯' }
 ]
 

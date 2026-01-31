@@ -251,6 +251,462 @@ fastify.get('/api/health/stats', { onRequest: [authenticate] }, async (request) 
   }
 })
 
+// ========== Sleep Records Routes ==========
+
+fastify.get('/api/sleep', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { startDate, endDate } = request.query
+
+  const where = { userId }
+  if (startDate || endDate) {
+    where.sleepDate = {}
+    if (startDate) where.sleepDate.gte = new Date(startDate)
+    if (endDate) where.sleepDate.lte = new Date(endDate)
+  }
+
+  const records = await prisma.sleepRecord.findMany({
+    where,
+    orderBy: { sleepDate: 'desc' }
+  })
+
+  return records
+})
+
+fastify.post('/api/sleep', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const {
+    sleepDate,
+    bedTime,
+    wakeTime,
+    durationHours,
+    quality,
+    interruptions,
+    timeToFallAsleep,
+    moodBeforeSleep,
+    moodUponWaking,
+    energyLevel,
+    tags,
+    notes
+  } = request.body
+
+  // 如果没有提供时长，但有入睡和醒来时间，则计算
+  let calculatedDuration = durationHours
+  if (!calculatedDuration && bedTime && wakeTime) {
+    const bed = new Date(bedTime)
+    const wake = new Date(wakeTime)
+    let diff = wake.getTime() - bed.getTime()
+    // 处理跨天情况
+    if (diff < 0) {
+      diff += 24 * 60 * 60 * 1000
+    }
+    calculatedDuration = diff / (1000 * 60 * 60)
+  }
+
+  const record = await prisma.sleepRecord.create({
+    data: {
+      userId,
+      sleepDate: sleepDate ? new Date(sleepDate) : new Date(),
+      bedTime: bedTime ? new Date(bedTime) : null,
+      wakeTime: wakeTime ? new Date(wakeTime) : null,
+      durationHours: calculatedDuration ? parseFloat(calculatedDuration.toFixed(2)) : null,
+      quality,
+      interruptions: interruptions || 0,
+      timeToFallAsleep,
+      moodBeforeSleep,
+      moodUponWaking,
+      energyLevel,
+      tags: Array.isArray(tags) ? JSON.stringify(tags) : tags,
+      notes
+    }
+  })
+
+  return record
+})
+
+fastify.put('/api/sleep/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+  const data = request.body
+
+  const record = await prisma.sleepRecord.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!record) {
+    return reply.code(404).send({ error: 'Sleep record not found' })
+  }
+
+  const updateData = {}
+  const allowedFields = ['sleepDate', 'bedTime', 'wakeTime', 'durationHours', 'quality',
+    'interruptions', 'timeToFallAsleep', 'moodBeforeSleep', 'moodUponWaking', 'energyLevel',
+    'tags', 'notes']
+
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) {
+      if (field === 'sleepDate' || field === 'bedTime' || field === 'wakeTime') {
+        updateData[field] = data[field] ? new Date(data[field]) : null
+      } else if (field === 'tags') {
+        updateData[field] = Array.isArray(data[field]) ? JSON.stringify(data[field]) : data[field]
+      } else {
+        updateData[field] = data[field]
+      }
+    }
+  }
+
+  // 重新计算时长（如果提供了时间）
+  if (updateData.bedTime && updateData.wakeTime && !updateData.durationHours) {
+    const bed = new Date(updateData.bedTime)
+    const wake = new Date(updateData.wakeTime)
+    let diff = wake.getTime() - bed.getTime()
+    if (diff < 0) diff += 24 * 60 * 60 * 1000
+    updateData.durationHours = parseFloat((diff / (1000 * 60 * 60)).toFixed(2))
+  }
+
+  const updated = await prisma.sleepRecord.update({
+    where: { id: parseInt(id) },
+    data: updateData
+  })
+
+  return updated
+})
+
+fastify.delete('/api/sleep/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+
+  const record = await prisma.sleepRecord.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!record) {
+    return reply.code(404).send({ error: 'Sleep record not found' })
+  }
+
+  await prisma.sleepRecord.delete({ where: { id: parseInt(id) } })
+
+  return { success: true }
+})
+
+// 睡眠统计
+fastify.get('/api/sleep/stats', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { days = 30 } = request.query
+
+  const since = new Date()
+  since.setDate(since.getDate() - parseInt(days))
+
+  const records = await prisma.sleepRecord.findMany({
+    where: {
+      userId,
+      sleepDate: { gte: since }
+    },
+    orderBy: { sleepDate: 'asc' }
+  })
+
+  if (records.length === 0) {
+    return {
+      totalRecords: 0,
+      avgDuration: null,
+      avgQuality: null,
+      latest: null,
+      weeklyTrend: []
+    }
+  }
+
+  const withDuration = records.filter(r => r.durationHours)
+  const withQuality = records.filter(r => r.quality)
+
+  const avgDuration = withDuration.length > 0
+    ? withDuration.reduce((sum, r) => sum + r.durationHours, 0) / withDuration.length
+    : null
+
+  const avgQuality = withQuality.length > 0
+    ? withQuality.reduce((sum, r) => sum + r.quality, 0) / withQuality.length
+    : null
+
+  // 按周分组统计
+  const weeklyTrend = []
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dayStr = date.toISOString().split('T')[0]
+    const dayRecord = records.find(r => r.sleepDate.toISOString().split('T')[0] === dayStr)
+    weeklyTrend.push({
+      date: dayStr,
+      duration: dayRecord?.durationHours || null,
+      quality: dayRecord?.quality || null
+    })
+  }
+
+  return {
+    totalRecords: records.length,
+    avgDuration: avgDuration ? parseFloat(avgDuration.toFixed(2)) : null,
+    avgQuality: avgQuality ? parseFloat(avgQuality.toFixed(1)) : null,
+    latest: records[records.length - 1] || records[0],
+    weeklyTrend
+  }
+})
+
+// ========== Mood Records Routes ==========
+
+fastify.get('/api/mood', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { startDate, endDate } = request.query
+
+  const where = { userId }
+  if (startDate || endDate) {
+    where.recordDate = {}
+    if (startDate) where.recordDate.gte = new Date(startDate)
+    if (endDate) where.recordDate.lte = new Date(endDate)
+  }
+
+  const records = await prisma.moodRecord.findMany({
+    where,
+    orderBy: { recordDate: 'desc' }
+  })
+
+  return records
+})
+
+fastify.post('/api/mood', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const {
+    recordDate,
+    mood,
+    energy,
+    stress,
+    moodTags,
+    physicalState,
+    activities,
+    weather,
+    notes
+  } = request.body
+
+  if (mood === undefined || mood < 1 || mood > 5) {
+    return reply.code(400).send({ error: 'Mood score (1-5) is required' })
+  }
+
+  const record = await prisma.moodRecord.create({
+    data: {
+      userId,
+      recordDate: recordDate ? new Date(recordDate) : new Date(),
+      mood,
+      energy,
+      stress,
+      moodTags: Array.isArray(moodTags) ? JSON.stringify(moodTags) : moodTags,
+      physicalState,
+      activities: Array.isArray(activities) ? JSON.stringify(activities) : activities,
+      weather,
+      notes
+    }
+  })
+
+  return record
+})
+
+fastify.put('/api/mood/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+  const data = request.body
+
+  const record = await prisma.moodRecord.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!record) {
+    return reply.code(404).send({ error: 'Mood record not found' })
+  }
+
+  const updateData = {}
+  const allowedFields = ['recordDate', 'mood', 'energy', 'stress', 'moodTags',
+    'physicalState', 'activities', 'weather', 'notes']
+
+  for (const field of allowedFields) {
+    if (data[field] !== undefined) {
+      if (field === 'recordDate') {
+        updateData[field] = data[field] ? new Date(data[field]) : null
+      } else if (field === 'moodTags' || field === 'activities') {
+        updateData[field] = Array.isArray(data[field]) ? JSON.stringify(data[field]) : data[field]
+      } else {
+        updateData[field] = data[field]
+      }
+    }
+  }
+
+  const updated = await prisma.moodRecord.update({
+    where: { id: parseInt(id) },
+    data: updateData
+  })
+
+  return updated
+})
+
+fastify.delete('/api/mood/:id', { onRequest: [authenticate] }, async (request, reply) => {
+  const userId = request.user.userId
+  const { id } = request.params
+
+  const record = await prisma.moodRecord.findFirst({
+    where: { id: parseInt(id), userId }
+  })
+
+  if (!record) {
+    return reply.code(404).send({ error: 'Mood record not found' })
+  }
+
+  await prisma.moodRecord.delete({ where: { id: parseInt(id) } })
+
+  return { success: true }
+})
+
+// 心情统计
+fastify.get('/api/mood/stats', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { days = 30 } = request.query
+
+  const since = new Date()
+  since.setDate(since.getDate() - parseInt(days))
+
+  const records = await prisma.moodRecord.findMany({
+    where: {
+      userId,
+      recordDate: { gte: since }
+    },
+    orderBy: { recordDate: 'asc' }
+  })
+
+  if (records.length === 0) {
+    return {
+      totalRecords: 0,
+      avgMood: null,
+      avgEnergy: null,
+      avgStress: null,
+      moodDistribution: {},
+      latest: null,
+      weeklyTrend: []
+    }
+  }
+
+  const avgMood = records.reduce((sum, r) => sum + r.mood, 0) / records.length
+  const withEnergy = records.filter(r => r.energy !== null)
+  const withStress = records.filter(r => r.stress !== null)
+
+  const avgEnergy = withEnergy.length > 0
+    ? withEnergy.reduce((sum, r) => sum + r.energy, 0) / withEnergy.length
+    : null
+
+  const avgStress = withStress.length > 0
+    ? withStress.reduce((sum, r) => sum + r.stress, 0) / withStress.length
+    : null
+
+  // 心情分布
+  const moodDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  records.forEach(r => {
+    moodDistribution[r.mood] = (moodDistribution[r.mood] || 0) + 1
+  })
+
+  // 过去7天趋势
+  const weeklyTrend = []
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date()
+    date.setDate(date.getDate() - i)
+    const dayStr = date.toISOString().split('T')[0]
+    const dayRecord = records.find(r => r.recordDate.toISOString().split('T')[0] === dayStr)
+    weeklyTrend.push({
+      date: dayStr,
+      mood: dayRecord?.mood || null,
+      energy: dayRecord?.energy || null,
+      stress: dayRecord?.stress || null
+    })
+  }
+
+  return {
+    totalRecords: records.length,
+    avgMood: parseFloat(avgMood.toFixed(1)),
+    avgEnergy: avgEnergy ? parseFloat(avgEnergy.toFixed(1)) : null,
+    avgStress: avgStress ? parseFloat(avgStress.toFixed(1)) : null,
+    moodDistribution,
+    latest: records[records.length - 1] || records[0],
+    weeklyTrend
+  }
+})
+
+// 睡眠与心情关联分析
+fastify.get('/api/wellness/correlation', { onRequest: [authenticate] }, async (request) => {
+  const userId = request.user.userId
+  const { days = 30 } = request.query
+
+  const since = new Date()
+  since.setDate(since.getDate() - parseInt(days))
+
+  // 获取睡眠和心情记录
+  const sleepRecords = await prisma.sleepRecord.findMany({
+    where: { userId, sleepDate: { gte: since } }
+  })
+
+  const moodRecords = await prisma.moodRecord.findMany({
+    where: { userId, recordDate: { gte: since } }
+  })
+
+  // 按日期合并数据
+  const dailyData = {}
+  sleepRecords.forEach(r => {
+    const date = r.sleepDate.toISOString().split('T')[0]
+    dailyData[date] = {
+      date,
+      sleepDuration: r.durationHours,
+      sleepQuality: r.quality,
+      energy: r.energyLevel,
+      mood: null,
+      moodTags: null
+    }
+  })
+
+  moodRecords.forEach(r => {
+    const date = r.recordDate.toISOString().split('T')[0]
+    if (!dailyData[date]) {
+      dailyData[date] = { date, sleepDuration: null, sleepQuality: null, energy: null }
+    }
+    dailyData[date].mood = r.mood
+    dailyData[date].moodEnergy = r.energy
+    dailyData[date].stress = r.stress
+    dailyData[date].moodTags = r.moodTags ? JSON.parse(r.moodTags) : []
+  })
+
+  const combinedData = Object.values(dailyData).sort((a, b) => a.date.localeCompare(b.date))
+
+  // 计算相关性（简单版）
+  const validData = combinedData.filter(d => d.sleepDuration && d.mood)
+  let correlation = null
+  if (validData.length >= 3) {
+    // 计算睡眠时长与心情的相关性
+    const avgSleep = validData.reduce((s, d) => s + d.sleepDuration, 0) / validData.length
+    const avgMood = validData.reduce((s, d) => s + d.mood, 0) / validData.length
+
+    let numerator = 0, denomSleep = 0, denomMood = 0
+    validData.forEach(d => {
+      const diffSleep = d.sleepDuration - avgSleep
+      const diffMood = d.mood - avgMood
+      numerator += diffSleep * diffMood
+      denomSleep += diffSleep * diffSleep
+      denomMood += diffMood * diffMood
+    })
+
+    correlation = denomSleep && denomMood ? numerator / Math.sqrt(denomSleep * denomMood) : 0
+  }
+
+  return {
+    period: `${days} days`,
+    correlation: correlation ? parseFloat(correlation.toFixed(2)) : null,
+    interpretation: correlation !== null ? {
+      positive: correlation > 0.3,      // 睡眠越多心情越好
+      negative: correlation < -0.3,     // 睡眠越多心情越差（不太常见）
+      strong: Math.abs(correlation) > 0.5,
+      none: Math.abs(correlation) <= 0.3
+    } : null,
+    dailyData: combinedData.slice(-14)  // 最近14天
+  }
+})
+
 // Meal Records Routes
 fastify.get('/api/meals', { onRequest: [authenticate] }, async (request) => {
   const userId = request.user.userId
