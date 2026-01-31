@@ -53,14 +53,18 @@ export class FoodRecognitionService {
                   type: 'text',
                   text: `请识别这张图片中的食物，返回 JSON 格式（只返回 JSON，不要有其他文字）：
                   {
-                    "foodName": "食物名称",
+                    "foodName": "具体食物名称，如番茄炒蛋、红烧肉等",
                     "mealType": "餐次类型 (breakfast/lunch/dinner/snack)",
                     "calories": 估算卡路里(数字),
                     "protein": 蛋白质克数(数字),
                     "carbs": 碳水克数(数字),
                     "fat": 脂肪克数(数字),
+                    "fiber": 膳食纤维克数(数字),
+                    "sugar": 糖分克数(数字),
+                    "sodium": 钠含量毫克数(数字),
+                    "servingSize": "份量描述，如1碗(约200g)、1份(约100g)",
                     "confidence": 置信度(0-1之间的数字),
-                    "description": "简短描述"
+                    "description": "简短描述，包括烹饪方式等"
                   }
 
                   如果图片中没有食物或无法识别，返回：
@@ -107,6 +111,10 @@ export class FoodRecognitionService {
           protein: parseNumber(result.protein),
           carbs: parseNumber(result.carbs),
           fat: parseNumber(result.fat),
+          fiber: parseNumber(result.fiber),
+          sugar: parseNumber(result.sugar),
+          sodium: parseNumber(result.sodium),
+          servingSize: result.servingSize || '',
           confidence: typeof result.confidence === 'number' ? result.confidence : 0.8,
           description: result.description || ''
         }

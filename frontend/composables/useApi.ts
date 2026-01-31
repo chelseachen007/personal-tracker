@@ -369,6 +369,111 @@ export function useApi() {
     return await fetchWithAuth(`${config.public.apiBase}/api/wellness/correlation?days=${days}`)
   }
 
+  // Exercise Plans
+  async function getExercisePlans(params: any = {}) {
+    const query = new URLSearchParams(params).toString()
+    return await fetchWithAuth(`${config.public.apiBase}/api/exercise-plans?${query}`)
+  }
+
+  async function createExercisePlan(data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/exercise-plans`, {
+      method: 'POST',
+      body: data
+    })
+  }
+
+  async function updateExercisePlan(data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/exercise-plans`, {
+      method: 'PUT',
+      body: data
+    })
+  }
+
+  async function deleteExercisePlan(id: number) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/exercise-plans`, {
+      method: 'DELETE',
+      body: { id }
+    })
+  }
+
+  async function getExercisePlanProgress(id: number) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/exercise-plans/progress?id=${id}`)
+  }
+
+  // Equipment
+  async function getEquipment(params: any = {}) {
+    const query = new URLSearchParams(params).toString()
+    return await fetchWithAuth(`${config.public.apiBase}/api/equipment?${query}`)
+  }
+
+  async function createEquipment(data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/equipment`, {
+      method: 'POST',
+      body: data
+    })
+  }
+
+  async function updateEquipment(data: any) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/equipment`, {
+      method: 'PUT',
+      body: data
+    })
+  }
+
+  async function deleteEquipment(id: number) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/equipment`, {
+      method: 'DELETE',
+      body: { id }
+    })
+  }
+
+  async function getEquipmentUsage(id: number) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/equipment/usage?id=${id}`)
+  }
+
+  // ========== Analytics ==========
+
+  // 全局搜索
+  async function globalSearch(query: string, options: { limit?: number; types?: string[] } = {}) {
+    const params = new URLSearchParams({ q: query })
+    if (options.limit) params.set('limit', options.limit.toString())
+    if (options.types) params.set('types', options.types.join(','))
+    return await fetchWithAuth(`${config.public.apiBase}/api/search?${params}`)
+  }
+
+  // 卡路里平衡分析
+  async function getCalorieBalance(startDate?: string, endDate?: string) {
+    const params = new URLSearchParams()
+    if (startDate) params.set('startDate', startDate)
+    if (endDate) params.set('endDate', endDate)
+    return await fetchWithAuth(`${config.public.apiBase}/api/analytics/calorie-balance?${params}`)
+  }
+
+  // 睡眠与运动表现关联
+  async function getPerformanceVsSleep(days: number = 30) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/analytics/performance-vs-sleep?days=${days}`)
+  }
+
+  // 综合健康评分
+  async function getHealthScore(date?: string) {
+    const params = new URLSearchParams()
+    if (date) params.set('date', date)
+    return await fetchWithAuth(`${config.public.apiBase}/api/analytics/health-score?${params}`)
+  }
+
+  // 情绪化行为模式检测
+  async function getEmotionalPatterns(days: number = 30) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/analytics/emotional-patterns?days=${days}`)
+  }
+
+  // 批量删除
+  async function batchDelete(type: string, ids: number[]) {
+    return await fetchWithAuth(`${config.public.apiBase}/api/batch-delete`, {
+      method: 'DELETE',
+      body: { type, ids }
+    })
+  }
+
   return {
     getToken,
     fetchWithAuth,
@@ -415,6 +520,25 @@ export function useApi() {
     updateMoodRecord,
     deleteMoodRecord,
     getMoodStats,
-    getWellnessCorrelation
+    getWellnessCorrelation,
+    // Exercise Plans
+    getExercisePlans,
+    createExercisePlan,
+    updateExercisePlan,
+    deleteExercisePlan,
+    getExercisePlanProgress,
+    // Equipment
+    getEquipment,
+    createEquipment,
+    updateEquipment,
+    deleteEquipment,
+    getEquipmentUsage,
+    // Analytics
+    globalSearch,
+    getCalorieBalance,
+    getPerformanceVsSleep,
+    getHealthScore,
+    getEmotionalPatterns,
+    batchDelete
   }
 }

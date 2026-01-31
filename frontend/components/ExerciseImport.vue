@@ -153,7 +153,7 @@
 </template>
 
 <script setup>
-import L from 'leaflet'
+import * as L from 'leaflet'
 import axios from 'axios'
 
 // Import Leaflet CSS only on client side

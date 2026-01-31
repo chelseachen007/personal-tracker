@@ -17,6 +17,64 @@
         </div>
       </div>
 
+      <!-- 卡路里平衡 -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">卡路里平衡</h3>
+          <span class="text-sm text-gray-500 dark:text-gray-400">
+            摄入 - 消耗 = 净卡路里
+          </span>
+        </div>
+        <div class="h-72">
+          <Line :data="calorieBalanceData" :options="calorieChartOptions" />
+        </div>
+      </div>
+
+      <!-- 健康评分趋势 -->
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+        <div class="flex justify-between items-center mb-4">
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white">综合健康评分趋势</h3>
+          <div class="flex items-center gap-2">
+            <span class="text-2xl font-bold" :style="{ color: healthScoreLevel?.color }">
+              {{ currentHealthScore }}
+            </span>
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+              {{ healthScoreLevel?.label || '-' }}
+            </span>
+          </div>
+        </div>
+        <div class="h-72">
+          <Line :data="healthScoreTrendData" :options="scoreTrendOptions" />
+        </div>
+      </div>
+
+      <!-- 情绪化行为模式 -->
+      <div v-if="emotionalPatterns?.patterns" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">情绪化行为模式</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div
+            v-for="(pattern, key) in displayPatterns"
+            :key="key"
+            class="p-4 rounded-lg border"
+            :class="pattern.detected ? 'border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-900/20' : 'border-gray-200 dark:border-gray-700'"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-medium text-gray-900 dark:text-white">{{ pattern.title }}</span>
+              <span :class="pattern.detected ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400 dark:text-gray-500'">
+                {{ pattern.detected ? '⚠️ 检测到' : '✅ 正常' }}
+              </span>
+            </div>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{{ pattern.description }}</p>
+          </div>
+        </div>
+        <div v-if="emotionalPatterns?.recommendations?.length > 0" class="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <p class="text-sm font-medium text-blue-900 dark:text-blue-300 mb-2">💡 建议</p>
+          <ul class="text-sm text-blue-800 dark:text-blue-400 space-y-1">
+            <li v-for="(rec, i) in emotionalPatterns.recommendations" :key="i">• {{ rec }}</li>
+          </ul>
+        </div>
+      </div>
+
       <!-- 营养趋势 -->
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
         <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">营养摄入趋势</h3>
@@ -119,12 +177,62 @@ const financeRecords = ref([])
 const sleepRecords = ref([])
 const moodRecords = ref([])
 const healthRecords = ref([])
+const calorieBalance = ref(null)
+const healthScoreTrend = ref([])
+const emotionalPatterns = ref(null)
 
 // 日期格式化
 function formatDate(dateStr) {
   const d = new Date(dateStr)
   return `${d.getMonth() + 1}/${d.getDate()}`
 }
+
+// 当前健康评分
+const currentHealthScore = computed(() => {
+  if (healthScoreTrend.value.length > 0) {
+    const latest = healthScoreTrend.value[healthScoreTrend.value.length - 1]
+    return latest.totalScore || 0
+  }
+  return 0
+})
+
+// 健康评分等级
+const healthScoreLevel = computed(() => {
+  const score = currentHealthScore.value
+  if (score >= 90) return { level: 'excellent', label: '优秀', color: '#22c55e' }
+  if (score >= 75) return { level: 'good', label: '良好', color: '#3b82f6' }
+  if (score >= 60) return { level: 'fair', label: '一般', color: '#eab308' }
+  if (score >= 40) return { level: 'poor', label: '较差', color: '#f97316' }
+  return { level: 'very_poor', label: '很差', color: '#ef4444' }
+})
+
+// 显示的情绪化行为模式
+const displayPatterns = computed(() => {
+  const patterns = emotionalPatterns.value?.patterns || {}
+  return {
+    stressEating: {
+      title: '压力饮食',
+      detected: patterns.stressEating?.detected,
+      description: patterns.stressEating?.detected
+        ? `压力大时平均摄入 ${patterns.stressEating.highStressAvg} kcal，比压力低时多 ${patterns.stressEating.differencePercent}%`
+        : '未检测到压力相关的饮食变化'
+    },
+    moodSpending: {
+      title: '情绪消费',
+      detected: patterns.moodSpending?.detected,
+      description: patterns.moodSpending?.detected
+        ? `心情差时平均消费 ${patterns.moodSpending.lowMoodAvg} 元，高于心情好时`
+        : '未检测到情绪相关的消费变化'
+    },
+    anxietyInactivity: {
+      title: '焦虑少动',
+      detected: patterns.anxietyInactivity?.detected,
+      description: patterns.anxietyInactivity?.detected
+        ? `压力大时平均运动 ${patterns.anxietyInactivity.highStressAvg} 分钟，明显减少`
+        : '未检测到压力相关的运动减少'
+    }
+  }
+})
 
 // 生成日期标签
 function generateDateLabels(days) {
@@ -587,6 +695,192 @@ const doughnutOptions = computed(() => ({
   }
 }))
 
+// ========== 新增图表数据 ==========
+
+// 卡路里平衡数据
+const calorieBalanceData = computed(() => {
+  if (!calorieBalance.value?.dailyData) {
+    return { labels: [], datasets: [] }
+  }
+
+  const days = parseInt(timeRange.value)
+  const dailyData = calorieBalance.value.dailyData.slice(-days)
+
+  return {
+    labels: dailyData.map(d => formatDate(d.date)),
+    datasets: [
+      {
+        label: '摄入 (kcal)',
+        data: dailyData.map(d => d.intake),
+        borderColor: '#22c55e',
+        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        fill: true,
+        tension: 0.3
+      },
+      {
+        label: '消耗 (kcal)',
+        data: dailyData.map(d => d.burned),
+        borderColor: '#f97316',
+        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+        fill: true,
+        tension: 0.3
+      },
+      {
+        label: '净卡路里',
+        data: dailyData.map(d => d.net),
+        borderColor: '#3b82f6',
+        backgroundColor: 'transparent',
+        borderDash: [5, 5],
+        tension: 0.3
+      }
+    ]
+  }
+})
+
+// 卡路里图表选项
+const calorieChartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    mode: 'index',
+    intersect: false
+  },
+  plugins: {
+    legend: {
+      display: true,
+      position: 'top',
+      labels: {
+        color: '#9ca3af',
+        usePointStyle: true,
+        padding: 15
+      }
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      titleColor: '#fff',
+      bodyColor: '#fff',
+      padding: 12,
+      cornerRadius: 8,
+      callbacks: {
+        label: function(context) {
+          let label = context.dataset.label || ''
+          if (label) label += ': '
+          label += Math.round(context.parsed.y) + ' kcal'
+          if (context.dataset.label === '净卡路里') {
+            const val = context.parsed.y
+            label += (val > 0 ? ' (盈余)' : val < 0 ? ' (赤字)' : ' (平衡)')
+          }
+          return label
+        }
+      }
+    }
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { color: '#9ca3af' }
+    },
+    y: {
+      grid: { color: 'rgba(156, 163, 175, 0.1)' },
+      ticks: { color: '#9ca3af' },
+      beginAtZero: true
+    }
+  }
+}))
+
+// 健康评分趋势数据
+const healthScoreTrendData = computed(() => {
+  if (healthScoreTrend.value.length === 0) {
+    return { labels: [], datasets: [] }
+  }
+
+  const days = parseInt(timeRange.value)
+  const trendData = healthScoreTrend.value.slice(-days)
+
+  return {
+    labels: trendData.map(d => formatDate(d.date)),
+    datasets: [
+      {
+        label: '总评分',
+        data: trendData.map(d => d.totalScore),
+        borderColor: '#3b82f6',
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        fill: true,
+        tension: 0.3,
+        borderWidth: 3
+      },
+      {
+        label: '运动',
+        data: trendData.map(d => d.exercise),
+        borderColor: '#8b5cf6',
+        backgroundColor: 'transparent',
+        tension: 0.3
+      },
+      {
+        label: '饮食',
+        data: trendData.map(d => d.diet),
+        borderColor: '#22c55e',
+        backgroundColor: 'transparent',
+        tension: 0.3
+      },
+      {
+        label: '睡眠',
+        data: trendData.map(d => d.sleep),
+        borderColor: '#6366f1',
+        backgroundColor: 'transparent',
+        tension: 0.3
+      },
+      {
+        label: '心情',
+        data: trendData.map(d => d.mood),
+        borderColor: '#f472b6',
+        backgroundColor: 'transparent',
+        tension: 0.3
+      }
+    ]
+  }
+})
+
+// 健康评分趋势图表选项
+const scoreTrendOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  interaction: {
+    mode: 'index',
+    intersect: false
+  },
+  plugins: {
+    legend: {
+      display: true,
+      position: 'top',
+      labels: {
+        color: '#9ca3af',
+        usePointStyle: true,
+        padding: 15
+      }
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+      titleColor: '#fff',
+      bodyColor: '#fff',
+      padding: 12,
+      cornerRadius: 8
+    }
+  },
+  scales: {
+    x: {
+      grid: { display: false },
+      ticks: { color: '#9ca3af' }
+    },
+    y: {
+      grid: { color: 'rgba(156, 163, 175, 0.1)' },
+      ticks: { color: '#9ca3af' },
+      min: 0,
+      max: 100
+    }
+  }
+}))
+
 // 加载数据
 async function loadData() {
   const days = parseInt(timeRange.value)
@@ -594,13 +888,16 @@ async function loadData() {
   startDate.setDate(startDate.getDate() - days)
 
   try {
-    const [meals, exercises, finances, sleeps, moods, health] = await Promise.all([
+    const [meals, exercises, finances, sleeps, moods, health, balance, score, patterns] = await Promise.all([
       api.getMealRecords({ startDate: startDate.toISOString() }),
       api.getExerciseRecords({ startDate: startDate.toISOString() }),
       api.getFinanceRecords({ startDate: startDate.toISOString() }),
       api.getSleepRecords({ startDate: startDate.toISOString() }),
       api.getMoodRecords({ startDate: startDate.toISOString() }),
-      api.getHealthRecords({ startDate: startDate.toISOString() })
+      api.getHealthRecords({ startDate: startDate.toISOString() }),
+      api.getCalorieBalance(startDate.toISOString(), new Date().toISOString()),
+      api.getHealthScore(),
+      api.getEmotionalPatterns(30)
     ])
 
     mealRecords.value = meals || []
@@ -609,6 +906,9 @@ async function loadData() {
     sleepRecords.value = sleeps || []
     moodRecords.value = moods || []
     healthRecords.value = health || []
+    calorieBalance.value = balance || null
+    healthScoreTrend.value = score?.dailyTrend || []
+    emotionalPatterns.value = patterns || null
   } catch (error) {
     console.error('Failed to load data:', error)
   }

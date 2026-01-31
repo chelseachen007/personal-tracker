@@ -27,6 +27,29 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
           </svg>
         </button>
+
+        <!-- 批量操作按钮 -->
+        <div v-if="showBatchActions && selectedCount > 0" class="flex items-center gap-2 ml-2 pl-4 border-l border-gray-300 dark:border-gray-600">
+          <span class="text-sm text-gray-600 dark:text-gray-400">已选 {{ selectedCount }} 条</span>
+          <button
+            @click="batchDelete"
+            class="px-3 py-1.5 text-sm bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors flex items-center gap-1"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            批量删除
+          </button>
+          <button
+            @click="deselectAll"
+            class="p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            title="取消选择"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       <div class="flex gap-2">
@@ -102,6 +125,8 @@ interface Props {
   showToolbar?: boolean
   showStats?: boolean
   rowSelection?: 'single' | 'multiple' | null
+  showBatchActions?: boolean
+  recordType?: string
   onRowClicked?: (event: any) => void
   onSelectionChanged?: (event: any) => void
 }
@@ -115,13 +140,12 @@ const props = withDefaults(defineProps<Props>(), {
   enableExport: true,
   showToolbar: true,
   showStats: true,
-  rowSelection: null
+  rowSelection: null,
+  showBatchActions: false,
+  recordType: ''
 })
 
-const emit = defineEmits<{
-  refresh: []
-  export: [{ format: 'csv' | 'xlsx' }]
-}>()
+const emit = defineEmits(["refresh", "export", "batchDelete"])
 
 const gridRef = ref<HTMLElement>()
 let gridApi: any = null
@@ -161,6 +185,7 @@ const gridOptions: GridOptions = {
     flex: 1
   },
   sideBar: false,
+  rowSelection: props.showBatchActions ? 'multiple' : (props.rowSelection === 'multiple' ? 'multiple' : props.rowSelection === 'single' ? 'single' : undefined),
   localeText: {
     page: '页',
     to: '至',
@@ -183,8 +208,7 @@ const gridOptions: GridOptions = {
     if (props.onSelectionChanged) {
       props.onSelectionChanged(event)
     }
-  },
-  rowSelection: props.rowSelection === 'multiple' ? 'multiple' : props.rowSelection === 'single' ? 'single' : undefined
+  }
 }
 
 function sizeColumnsToFit() {
@@ -212,6 +236,20 @@ async function exportData(format: 'csv' | 'xlsx') {
   } else {
     emit('export', { format })
   }
+}
+
+async function batchDelete() {
+  const selectedRows = gridApi?.getSelectedRows() || []
+  if (selectedRows.length === 0) return
+
+  const confirmed = confirm(`确定要删除选中的 ${selectedRows.length} 条记录吗？此操作不可撤销。`)
+  if (!confirmed) return
+
+  const ids = selectedRows.map(row => row.id)
+  emit('batchDelete', { ids })
+
+  // 清除选择
+  gridApi?.deselectAll()
 }
 
 // 监听数据变化
@@ -266,7 +304,10 @@ defineExpose({
   refresh: () => gridApi?.refreshCells(),
   exportData,
   getSelectedRows: () => gridApi?.getSelectedRows() || [],
-  deselectAll: () => gridApi?.deselectAll()
+  deselectAll: () => {
+    gridApi?.deselectAll()
+    selectedCount.value = 0
+  }
 })
 </script>
 

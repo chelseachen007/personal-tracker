@@ -108,22 +108,38 @@
             </div>
 
             <!-- 营养素网格 -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div class="bg-white dark:bg-gray-900 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-orange-600">{{ result.calories }}</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div class="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                <div class="text-xl font-bold text-orange-600">{{ result.calories }}</div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">卡路里 (kcal)</div>
               </div>
-              <div class="bg-white dark:bg-gray-900 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-red-600">{{ result.protein }}g</div>
+              <div class="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                <div class="text-xl font-bold text-red-600">{{ result.protein }}g</div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">蛋白质</div>
               </div>
-              <div class="bg-white dark:bg-gray-900 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-yellow-600">{{ result.carbs }}g</div>
+              <div class="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                <div class="text-xl font-bold text-yellow-600">{{ result.carbs }}g</div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">碳水</div>
               </div>
-              <div class="bg-white dark:bg-gray-900 rounded-lg p-4 text-center">
-                <div class="text-2xl font-bold text-blue-600">{{ result.fat }}g</div>
+              <div class="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                <div class="text-xl font-bold text-blue-600">{{ result.fat }}g</div>
                 <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">脂肪</div>
+              </div>
+              <div class="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                <div class="text-xl font-bold text-green-600">{{ result.fiber || '-' }}g</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">膳食纤维</div>
+              </div>
+              <div class="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                <div class="text-xl font-bold text-pink-600">{{ result.sugar || '-' }}g</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">糖分</div>
+              </div>
+              <div class="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                <div class="text-xl font-bold text-purple-600">{{ result.sodium || '-' }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">钠 (mg)</div>
+              </div>
+              <div class="bg-white dark:bg-gray-900 rounded-lg p-3 text-center">
+                <div class="text-sm font-bold text-gray-600 dark:text-gray-300">{{ result.servingSize || '-' }}</div>
+                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">份量</div>
               </div>
             </div>
           </div>
@@ -198,6 +214,45 @@
                     class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                   >
                 </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">膳食纤维 (g)</label>
+                  <input
+                    v-model.number="editForm.fiber"
+                    type="number"
+                    step="0.1"
+                    placeholder="可选"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">糖分 (g)</label>
+                  <input
+                    v-model.number="editForm.sugar"
+                    type="number"
+                    step="0.1"
+                    placeholder="可选"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">钠 (mg)</label>
+                  <input
+                    v-model.number="editForm.sodium"
+                    type="number"
+                    step="1"
+                    placeholder="可选"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">份量</label>
+                  <input
+                    v-model="editForm.servingSize"
+                    type="text"
+                    placeholder="如: 100g, 1碗"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  >
+                </div>
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">备注</label>
@@ -266,6 +321,10 @@ const editForm = ref({
   protein: 0,
   carbs: 0,
   fat: 0,
+  fiber: 0,
+  sugar: 0,
+  sodium: 0,
+  servingSize: '',
   notes: ''
 })
 
@@ -387,7 +446,11 @@ async function recognizeFood() {
       protein: response.protein || 0,
       carbs: response.carbs || 0,
       fat: response.fat || 0,
-      notes: `AI识别 - 置信度: ${Math.round(response.confidence * 100)}%. ${response.description || ''}`
+      fiber: response.fiber || 0,
+      sugar: response.sugar || 0,
+      sodium: response.sodium || 0,
+      servingSize: response.servingSize || '',
+      notes: `AI识别 - 置信度: ${Math.round(response.confidence * 100)}%. ${response.description || ''} ${response.servingSize ? `份量: ${response.servingSize}` : ''}`
     }
   } catch (error: any) {
     if (error.message !== '登录已过期，请重新登录') {
@@ -420,6 +483,10 @@ function reset() {
     protein: 0,
     carbs: 0,
     fat: 0,
+    fiber: 0,
+    sugar: 0,
+    sodium: 0,
+    servingSize: '',
     notes: ''
   }
 }

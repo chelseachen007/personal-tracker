@@ -279,6 +279,10 @@ export class OCRService {
       protein: null,
       carbs: null,
       fat: null,
+      fiber: null,
+      sugar: null,
+      sodium: null,
+      servingSize: null,
       mealType: 'unknown',
       confidence: 0.7
     }
@@ -296,10 +300,27 @@ export class OCRService {
 
     // 识别食物名称 (通常在最前面或包含"食物"、"菜品"等)
     for (const line of lines) {
-      if (line.length < 15 && !line.includes('卡路里') && !line.includes('热量')) {
+      if (line.length < 15 && !line.includes('卡路里') && !line.includes('热量') && !line.includes('营养') && !line.includes('成分')) {
         parsed.foodName = line
         break
       }
+    }
+
+    // 识别份量 (如: 100g, 1份, 1碗, 200ml)
+    const servingPatterns = [
+      /(?:份量|每份|serving)[:：\s]*(\d+(?:\.\d+)?)\s*(g|克|ml|毫升|份|碗|杯|个)/i,
+      /(\d+(?:\.\d+)?)\s*(?:g|克|ml|毫升|份|碗|杯|个)/i,
+    ]
+
+    for (const line of lines) {
+      for (const pattern of servingPatterns) {
+        const match = line.match(pattern)
+        if (match) {
+          parsed.servingSize = `${match[1]}${match[2]}`
+          break
+        }
+      }
+      if (parsed.servingSize) break
     }
 
     // 识别卡路里 (支持: 卡路里 xxx, 热量 xxx, xxx kcal, xxx 千卡, xxx 卡)
@@ -365,6 +386,54 @@ export class OCRService {
         }
       }
       if (parsed.fat) break
+    }
+
+    // 识别膳食纤维 (支持: 膳食纤维 xx, 纤维 xx g)
+    const fiberPatterns = [
+      /(?:膳食纤维|食用纤维|纤维)[:：\s]*(\d+\.?\d*)\s*(?:g|克)?/,
+    ]
+
+    for (const line of lines) {
+      for (const pattern of fiberPatterns) {
+        const match = line.match(pattern)
+        if (match) {
+          parsed.fiber = parseFloat(match[1])
+          break
+        }
+      }
+      if (parsed.fiber) break
+    }
+
+    // 识别糖分 (支持: 糖 xx, 糖分 xx g)
+    const sugarPatterns = [
+      /(?:糖分|糖|碳水化合物.*糖)[:：\s]*(\d+\.?\d*)\s*(?:g|克)?/,
+    ]
+
+    for (const line of lines) {
+      for (const pattern of sugarPatterns) {
+        const match = line.match(pattern)
+        if (match) {
+          parsed.sugar = parseFloat(match[1])
+          break
+        }
+      }
+      if (parsed.sugar) break
+    }
+
+    // 识别钠 (支持: 钠 xx mg, 钠 xx 毫克)
+    const sodiumPatterns = [
+      /(?:钠)[:：\s]*(\d+\.?\d*)\s*(?:mg|毫克)/,
+    ]
+
+    for (const line of lines) {
+      for (const pattern of sodiumPatterns) {
+        const match = line.match(pattern)
+        if (match) {
+          parsed.sodium = parseFloat(match[1])
+          break
+        }
+      }
+      if (parsed.sodium) break
     }
 
     return parsed

@@ -92,6 +92,14 @@
           <div>{{ result.carbs || '-' }} g</div>
           <div class="text-gray-500">脂肪:</div>
           <div>{{ result.fat || '-' }} g</div>
+          <div class="text-gray-500">膳食纤维:</div>
+          <div>{{ result.fiber || '-' }} g</div>
+          <div class="text-gray-500">糖分:</div>
+          <div>{{ result.sugar || '-' }} g</div>
+          <div class="text-gray-500">钠:</div>
+          <div>{{ result.sodium || '-' }} mg</div>
+          <div class="text-gray-500">份量:</div>
+          <div>{{ result.servingSize || '-' }}</div>
         </div>
       </div>
 

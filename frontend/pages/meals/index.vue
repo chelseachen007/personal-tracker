@@ -144,6 +144,34 @@
               <input v-model.number="form.fat" type="number" step="0.1" placeholder="g"
                 class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent" />
             </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                膳食纤维 (可选)
+              </label>
+              <input v-model.number="form.fiber" type="number" step="0.1" placeholder="g"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                糖分 (可选)
+              </label>
+              <input v-model.number="form.sugar" type="number" step="0.1" placeholder="g"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                钠 (可选)
+              </label>
+              <input v-model.number="form.sodium" type="number" step="1" placeholder="mg"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                份量 (可选)
+              </label>
+              <input v-model="form.servingSize" type="text" placeholder="如: 100g, 1碗"
+                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-green-500 focus:border-transparent" />
+            </div>
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -233,6 +261,10 @@ const form = ref({
   protein: null,
   carbs: null,
   fat: null,
+  fiber: null,
+  sugar: null,
+  sodium: null,
+  servingSize: '',
   notes: ''
 })
 
@@ -349,6 +381,10 @@ async function submitForm () {
       protein: null,
       carbs: null,
       fat: null,
+      fiber: null,
+      sugar: null,
+      sodium: null,
+      servingSize: '',
       notes: ''
     }
     await loadRecords()

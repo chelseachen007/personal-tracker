@@ -9,7 +9,7 @@
         训练计划
       </h3>
       <button
-        @click="showForm = !showForm"
+        @click="openNewPlanForm"
         class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 flex items-center gap-2"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -21,7 +21,9 @@
 
     <!-- 添加训练计划表单 -->
     <div v-if="showForm" class="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-6 mb-6">
-      <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">创建训练计划</h4>
+      <h4 class="text-md font-semibold text-gray-900 dark:text-white mb-4">
+        {{ editingPlanId ? '编辑训练计划' : '创建训练计划' }}
+      </h4>
       <form @submit.prevent="submitForm" class="space-y-4">
         <div>
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -109,7 +111,7 @@
             </svg>
             保存计划
           </button>
-          <button type="button" @click="showForm = false"
+          <button type="button" @click="cancelForm"
             class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
             取消
           </button>
@@ -270,6 +272,7 @@ const loading = ref(true)
 const progressLoading = ref(false)
 const plans = ref([])
 const selectedPlanProgress = ref(null)
+const editingPlanId = ref(null)
 
 const form = ref({
   name: '',
@@ -297,11 +300,7 @@ const unitMap = {
 async function loadPlans() {
   try {
     loading.value = true
-    plans.value = await $fetch('/api/exercise-plans', {
-      headers: {
-        Authorization: `Bearer ${api.getToken()}`
-      }
-    })
+    plans.value = await api.getExercisePlans()
   } catch (error) {
     console.error('Failed to load plans:', error)
   } finally {
@@ -311,39 +310,59 @@ async function loadPlans() {
 
 async function submitForm() {
   try {
-    await $fetch('/api/exercise-plans', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${api.getToken()}`
-      },
-      body: form.value
-    })
-
-    showForm.value = false
-    form.value = {
-      name: '',
-      type: 'running',
-      frequency: 3,
-      startDate: new Date().toISOString().split('T')[0],
-      endDate: '',
-      targetValue: null,
-      unit: '',
-      description: ''
+    if (editingPlanId.value) {
+      // 更新计划 - id 包含在请求体中
+      await api.updateExercisePlan({
+        id: editingPlanId.value,
+        ...form.value
+      })
+    } else {
+      // 创建新计划
+      await api.createExercisePlan(form.value)
     }
 
+    showForm.value = false
+    editingPlanId.value = null
+    resetForm()
     await loadPlans()
   } catch (error) {
-    alert('创建计划失败: ' + error.message)
+    alert(editingPlanId.value ? '更新计划失败: ' : '创建计划失败: ' + error.message)
   }
 }
 
+function resetForm() {
+  form.value = {
+    name: '',
+    type: 'running',
+    frequency: 3,
+    startDate: new Date().toISOString().split('T')[0],
+    endDate: '',
+    targetValue: null,
+    unit: '',
+    description: ''
+  }
+}
+
+function cancelForm() {
+  showForm.value = false
+  editingPlanId.value = null
+  resetForm()
+}
+
+function openNewPlanForm() {
+  editingPlanId.value = null
+  resetForm()
+  showForm.value = true
+}
+
 function editPlan(plan) {
+  editingPlanId.value = plan.id
   form.value = {
     name: plan.name,
     type: plan.type,
     frequency: plan.frequency,
-    startDate: plan.startDate.split('T')[0],
-    endDate: plan.endDate ? plan.endDate.split('T')[0] : '',
+    startDate: plan.startDate ? (plan.startDate.split('T')[0]) : '',
+    endDate: plan.endDate ? (plan.endDate.split('T')[0]) : '',
     targetValue: plan.targetValue,
     unit: plan.unit || '',
     description: plan.description
@@ -354,13 +373,7 @@ function editPlan(plan) {
 async function deletePlan(id) {
   if (confirm('确定要删除这个训练计划吗？')) {
     try {
-      await $fetch(`/api/exercise-plans/${id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${api.getToken()}`
-        }
-      })
-
+      await api.deleteExercisePlan(id)
       await loadPlans()
     } catch (error) {
       alert('删除计划失败: ' + error.message)
@@ -373,12 +386,7 @@ async function viewProgress(plan) {
     progressLoading.value = true
     selectedPlanProgress.value = null
 
-    const progress = await $fetch(`/api/exercise-plans/${plan.id}/progress`, {
-      headers: {
-        Authorization: `Bearer ${api.getToken()}`
-      }
-    })
-
+    const progress = await api.getExercisePlanProgress(plan.id)
     selectedPlanProgress.value = progress
   } catch (error) {
     alert('加载进度失败: ' + error.message)
