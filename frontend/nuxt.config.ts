@@ -26,5 +26,16 @@ export default defineNuxtConfig({
     'ag-grid-community/styles/ag-theme-quartz.css'
   ],
 
-  ssr: false
+  ssr: false,
+
+  vite: {
+    optimizeDeps: {
+      exclude: ['leaflet']
+    },
+    build: {
+      rollupOptions: {
+        external: ['leaflet']
+      }
+    }
+  }
 })
