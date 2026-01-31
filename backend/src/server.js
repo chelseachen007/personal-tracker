@@ -397,7 +397,19 @@ fastify.get('/api/exercises', { onRequest: [authenticate] }, async (request) => 
 
 fastify.post('/api/exercises', { onRequest: [authenticate] }, async (request) => {
   const userId = request.user.userId
-  const { exerciseDate, exerciseType, durationMinutes, distanceKm, caloriesBurned, notes } = request.body
+  const {
+    exerciseDate,
+    exerciseType,
+    durationMinutes,
+    distanceKm,
+    caloriesBurned,
+    rpe,
+    weatherCondition,
+    temperature,
+    humidity,
+    windSpeed,
+    notes
+  } = request.body
 
   const record = await prisma.exerciseRecord.create({
     data: {
@@ -407,6 +419,11 @@ fastify.post('/api/exercises', { onRequest: [authenticate] }, async (request) =>
       durationMinutes,
       distanceKm,
       caloriesBurned,
+      rpe,
+      weatherCondition,
+      temperature,
+      humidity,
+      windSpeed,
       notes
     }
   })
@@ -433,6 +450,11 @@ fastify.put('/api/exercises/:id', { onRequest: [authenticate] }, async (request,
   if (data.durationMinutes !== undefined) updateData.durationMinutes = data.durationMinutes
   if (data.distanceKm !== undefined) updateData.distanceKm = data.distanceKm
   if (data.caloriesBurned !== undefined) updateData.caloriesBurned = data.caloriesBurned
+  if (data.rpe !== undefined) updateData.rpe = data.rpe
+  if (data.weatherCondition !== undefined) updateData.weatherCondition = data.weatherCondition
+  if (data.temperature !== undefined) updateData.temperature = data.temperature
+  if (data.humidity !== undefined) updateData.humidity = data.humidity
+  if (data.windSpeed !== undefined) updateData.windSpeed = data.windSpeed
   if (data.notes !== undefined) updateData.notes = data.notes
 
   const updated = await prisma.exerciseRecord.update({

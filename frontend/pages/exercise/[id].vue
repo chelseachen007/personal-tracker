@@ -167,6 +167,96 @@
               </div>
             </div>
 
+            <!-- 感受评分 (RPE) -->
+            <div v-if="record.rpe" class="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">感受评分</h3>
+              <div class="flex items-center gap-6">
+                <div class="flex-1">
+                  <div class="flex items-center gap-4">
+                    <div class="text-5xl font-bold" :class="getRPEColorClass(record.rpe)">
+                      {{ record.rpe }}/10
+                    </div>
+                    <div>
+                      <div class="text-sm text-gray-500 dark:text-gray-400 mb-1">主观疲劳度</div>
+                      <div class="text-lg font-medium" :class="getRPEColorClass(record.rpe)">
+                        {{ getRPELabel(record.rpe) }}
+                      </div>
+                    </div>
+                  </div>
+                  <!-- RPE 量表 -->
+                  <div class="mt-4 flex gap-1">
+                    <div
+                      v-for="i in 10"
+                      :key="i"
+                      class="flex-1 h-3 rounded transition-all"
+                      :class="{
+                        'bg-green-500': i <= 2,
+                        'bg-blue-500': i > 2 && i <= 4,
+                        'bg-yellow-500': i > 4 && i <= 6,
+                        'bg-orange-500': i > 6 && i <= 8,
+                        'bg-red-500': i > 8
+                      }"
+                      :style="{ opacity: i <= record.rpe ? 1 : 0.2 }"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 天气数据 -->
+            <div v-if="record.weatherCondition || record.temperature" class="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">天气状况</h3>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div v-if="record.weatherCondition" class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-2xl">
+                    {{ getWeatherIcon(record.weatherCondition) }}
+                  </div>
+                  <div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">天气</div>
+                    <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                      {{ record.weatherCondition }}
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="record.temperature" class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-full bg-orange-100 dark:bg-orange-900 flex items-center justify-center text-2xl">
+                    🌡️
+                  </div>
+                  <div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">温度</div>
+                    <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                      {{ record.temperature }}°C
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="record.humidity" class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-full bg-cyan-100 dark:bg-cyan-900 flex items-center justify-center text-2xl">
+                    💧
+                  </div>
+                  <div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">湿度</div>
+                    <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                      {{ record.humidity }}%
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="record.windSpeed" class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-2xl">
+                    💨
+                  </div>
+                  <div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">风速</div>
+                    <div class="text-lg font-semibold text-gray-900 dark:text-white">
+                      {{ record.windSpeed }} km/h
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <!-- 地图 -->
             <div v-if="trackPoints && trackPoints.length > 0" class="p-6 border-b border-gray-200 dark:border-gray-700">
               <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">运动轨迹</h3>
@@ -362,6 +452,36 @@ function calculateElevationDiff() {
     return (record.value.maxElevation - record.value.minElevation) + ' m'
   }
   return '-'
+}
+
+function getRPELabel(rpe) {
+  if (rpe <= 2) return '非常轻松 😊'
+  if (rpe <= 4) return '轻松 😀'
+  if (rpe <= 6) return '中等 😐'
+  if (rpe <= 8) return '较累 😓'
+  return '非常累 😫'
+}
+
+function getRPEColorClass(rpe) {
+  if (rpe <= 2) return 'text-green-600 dark:text-green-400'
+  if (rpe <= 4) return 'text-blue-600 dark:text-blue-400'
+  if (rpe <= 6) return 'text-yellow-600 dark:text-yellow-400'
+  if (rpe <= 8) return 'text-orange-600 dark:text-orange-400'
+  return 'text-red-600 dark:text-red-400'
+}
+
+function getWeatherIcon(condition) {
+  const icons = {
+    '晴天': '☀️',
+    '多云': '⛅',
+    '阴天': '☁️',
+    '小雨': '🌧️',
+    '中雨': '🌧️',
+    '大雨': '⛈️',
+    '雪': '❄️',
+    '雾': '🌫️'
+  }
+  return icons[condition] || '🌤️'
 }
 
 onMounted(() => {

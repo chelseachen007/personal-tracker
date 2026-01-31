@@ -154,6 +154,7 @@
 
 <script setup>
 import L from 'leaflet'
+import axios from 'axios'
 
 // Import Leaflet CSS only on client side
 onMounted(() => {
@@ -199,9 +200,9 @@ async function handleFile(file) {
     const formData = new FormData()
     formData.append('file', file)
 
-    const response = await $fetch('/api/exercises/import', {
-      method: 'POST',
-      body: formData,
+    // Use axios for upload progress support
+    const response = await axios.post('/api/exercises/import', formData, {
+      baseURL: useRuntimeConfig().public.apiBase,
       headers: {
         'Authorization': `Bearer ${api.getToken()}`
       },
@@ -210,17 +211,17 @@ async function handleFile(file) {
       }
     })
 
-    importedData.value = response.record
-    trackData.value = response.trackData
+    importedData.value = response.data.record
+    trackData.value = response.data.trackData
 
-    emit('imported', response.record)
+    emit('imported', response.data.record)
 
     // 初始化地图
     nextTick(() => {
-      initMap(response.trackData)
+      initMap(response.data.trackData)
     })
   } catch (err) {
-    error.value = err.message || '导入失败，请重试'
+    error.value = err.response?.data?.error || err.message || '导入失败，请重试'
   } finally {
     uploading.value = false
   }

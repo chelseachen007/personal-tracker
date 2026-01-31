@@ -109,6 +109,74 @@
                   class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
               </div>
             </div>
+
+            <!-- 感受评分 (RPE) -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                感受评分 (RPE) <span class="text-xs text-gray-400">1-10，10为最累</span>
+              </label>
+              <div class="flex gap-2">
+                <button
+                  v-for="i in 10"
+                  :key="i"
+                  type="button"
+                  @click="form.rpe = i"
+                  class="flex-1 py-2 rounded-lg text-center transition-all"
+                  :class="{
+                    'bg-purple-600 text-white font-bold': form.rpe === i,
+                    'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600': form.rpe !== i
+                  }"
+                >
+                  {{ i }}
+                </button>
+              </div>
+              <div v-if="form.rpe" class="mt-2 text-sm" :class="getRPEColorClass(form.rpe)">
+                {{ getRPELabel(form.rpe) }}
+              </div>
+            </div>
+
+            <!-- 天气数据 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  天气
+                </label>
+                <select v-model="form.weatherCondition"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                  <option value="">未知</option>
+                  <option value="晴天">☀️ 晴天</option>
+                  <option value="多云">⛅ 多云</option>
+                  <option value="阴天">☁️ 阴天</option>
+                  <option value="小雨">🌧️ 小雨</option>
+                  <option value="中雨">🌧️ 中雨</option>
+                  <option value="大雨">⛈️ 大雨</option>
+                  <option value="雪">❄️ 雪</option>
+                  <option value="雾">🌫️ 雾</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  温度 (°C)
+                </label>
+                <input v-model.number="form.temperature" type="number" step="0.1" placeholder="可选"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  湿度 (%)
+                </label>
+                <input v-model.number="form.humidity" type="number" min="0" max="100" placeholder="可选"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  风速
+                </label>
+                <input v-model.number="form.windSpeed" type="number" step="0.1" placeholder="可选"
+                  class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent" />
+              </div>
+            </div>
+
             <div>
               <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 备注
@@ -205,6 +273,11 @@ const form = ref({
   durationMinutes: null,
   distanceKm: null,
   caloriesBurned: null,
+  rpe: null,
+  weatherCondition: '',
+  temperature: null,
+  humidity: null,
+  windSpeed: null,
   notes: ''
 })
 
@@ -321,6 +394,11 @@ async function submitForm () {
       durationMinutes: null,
       distanceKm: null,
       caloriesBurned: null,
+      rpe: null,
+      weatherCondition: '',
+      temperature: null,
+      humidity: null,
+      windSpeed: null,
       notes: ''
     }
     await loadRecords()
@@ -359,6 +437,22 @@ function formatPace (pace) {
   const mins = Math.floor(pace)
   const secs = Math.round((pace - mins) * 60)
   return `${mins}'${secs.toString().padStart(2, '0')}" /km`
+}
+
+function getRPELabel (rpe) {
+  if (rpe <= 2) return '非常轻松 😊'
+  if (rpe <= 4) return '轻松 😀'
+  if (rpe <= 6) return '中等 😐'
+  if (rpe <= 8) return '较累 😓'
+  return '非常累 😫'
+}
+
+function getRPEColorClass (rpe) {
+  if (rpe <= 2) return 'text-green-600 dark:text-green-400'
+  if (rpe <= 4) return 'text-blue-600 dark:text-blue-400'
+  if (rpe <= 6) return 'text-yellow-600 dark:text-yellow-400'
+  if (rpe <= 8) return 'text-orange-600 dark:text-orange-400'
+  return 'text-red-600 dark:text-red-400'
 }
 
 // 监听表格内的按钮点击

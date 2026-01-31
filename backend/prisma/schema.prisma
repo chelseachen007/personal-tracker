@@ -91,6 +91,15 @@ model ExerciseRecord {
   // 步频 (步/分钟)
   cadence         Int?
 
+  // 感受评分 (RPE) 1-10
+  rpe             Int?                                // 主观疲劳度 1-10
+
+  // 天气数据
+  temperature     Float?                              // 温度 (°C)
+  humidity        Int?                                // 湿度 (%)
+  windSpeed       Float?    @map("wind_speed")        // 风速 (km/h)
+  weatherCondition String?   @map("weather_condition") // 天气状况：晴天/多云/雨天等
+
   // 装备和标签
   equipment       String?                         // 装备名称（兼容旧数据）
   equipmentId     Int?        @map("equipment_id") // 装备ID
