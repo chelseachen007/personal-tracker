@@ -15,6 +15,8 @@ services:
     environment:
       - NODE_ENV=production
       - JWT_SECRET=${JWT_SECRET:-change-this-secret-in-production}
+      # SSO 服务地址（修改为实际部署的 SSO 地址）
+      - SSO_SERVER_URL=${SSO_SERVER_URL:-http://localhost:3002}
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:3001/docs"]
@@ -28,10 +30,13 @@ services:
       dockerfile: Dockerfile
       args:
         - NUXT_PUBLIC_API_BASE_URL=${API_BASE_URL:-http://localhost:3001}
+        # SSO 服务地址（前端可访问的地址）
+        - NUXT_PUBLIC_SSO_SERVER_URL=${SSO_SERVER_URL:-http://localhost:3002}
     ports:
       - "7003:3000"
     environment:
       - NUXT_PUBLIC_API_BASE_URL=${API_BASE_URL:-http://localhost:3001}
+      - NUXT_PUBLIC_SSO_SERVER_URL=${SSO_SERVER_URL:-http://localhost:3002}
     depends_on:
       backend:
         condition: service_healthy

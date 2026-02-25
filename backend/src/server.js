@@ -1,7 +1,6 @@
 import 'dotenv/config'
 import Fastify from 'fastify'
 import cors from '@fastify/cors'
-import jwt from '@fastify/jwt'
 import swagger from '@fastify/swagger'
 import swaggerUI from '@fastify/swagger-ui'
 import { PrismaClient } from '@prisma/client'
@@ -31,14 +30,14 @@ const fastify = Fastify({
 // 开发模式：禁用认证
 const isDev = process.env.NODE_ENV !== 'production'
 
+// SSO 服务地址
+const SSO_SERVER_URL = process.env.SSO_SERVER_URL || 'http://localhost:3002'
+
 // ========== 注册插件 ==========
 
 await fastify.register(cors, {
-  origin: true
-})
-
-await fastify.register(jwt, {
-  secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production'
+  origin: true,
+  credentials: true
 })
 
 await fastify.register(multipart, {
@@ -71,16 +70,78 @@ await fastify.register(swaggerUI, {
   routePrefix: '/docs'
 })
 
-// 用户 ID 中间件（开发模式使用默认用户 ID）
-fastify.addHook('onRequest', async (request, reply) => {
-  if (isDev && !request.user) {
-    request.user = { userId: 1 }
+// SSO Token 验证中间件
+async function verifySSOToken(request, reply) {
+  const token = request.headers.authorization?.replace('Bearer ', '')
+
+  if (!token) {
+    // 开发模式下使用默认用户
+    if (isDev) {
+      request.user = { userId: 1, uuid: 'dev-user', username: 'dev' }
+      return
+    }
+    return reply.code(401).send({ error: 'No token provided' })
   }
+
+  try {
+    // 调用 SSO 服务验证 token
+    const response = await fetch(`${SSO_SERVER_URL}/api/token/verify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ token })
+    })
+
+    const result = await response.json()
+
+    if (!result.valid) {
+      return reply.code(401).send({ error: result.error || 'Invalid token' })
+    }
+
+    // 将用户信息附加到 request
+    request.user = result.user
+
+    // 确保本地数据库有该用户（用于关联本地数据）
+    await prisma.user.upsert({
+      where: { id: result.user.userId },
+      create: {
+        id: result.user.userId,
+        username: result.user.username || result.user.email?.split('@')[0] || `user_${result.user.userId}`,
+        passwordHash: ''
+      },
+      update: {}
+    })
+
+  } catch (err) {
+    fastify.log.error('SSO token verification failed:', err)
+
+    // 如果 SSO 服务不可用，开发模式下使用默认用户
+    if (isDev) {
+      request.user = { userId: 1, uuid: 'dev-user', username: 'dev' }
+      return
+    }
+
+    return reply.code(503).send({ error: 'SSO service unavailable' })
+  }
+}
+
+// 全局认证中间件
+fastify.addHook('onRequest', async (request, reply) => {
+  // 跳过不需要认证的路由
+  const publicPaths = ['/docs', '/docs/', '/health', '/api/auth/login', '/api/auth/register', '/api/auth/sso-url']
+
+  if (publicPaths.some(path => request.url.startsWith(path))) {
+    return
+  }
+
+  // 对其他路由进行 SSO token 验证
+  await verifySSOToken(request, reply)
 })
 
 // ========== 注册路由模块 ==========
 
-// 认证路由（返回 authMiddleware 供其他路由使用）
+// 认证路由
 const authResult = await authRoutes(fastify, prisma, isDev)
 
 // 开发模式使用空数组，生产模式使用认证中间件
@@ -122,6 +183,11 @@ await analyticsRoutes(fastify, prisma, authMiddleware)
 // 食物数据库路由
 await foodRoutes(fastify, prisma, authMiddleware)
 
+// 健康检查
+fastify.get('/health', async () => {
+  return { status: 'ok', timestamp: new Date().toISOString() }
+})
+
 // ========== 启动服务器 ==========
 
 const start = async () => {
@@ -129,6 +195,7 @@ const start = async () => {
     await fastify.listen({ port: 3001, host: '0.0.0.0' })
     console.log('🚀 Server running at http://localhost:3001')
     console.log('📚 API Docs at http://localhost:3001/docs')
+    console.log(`🔐 SSO Server: ${SSO_SERVER_URL}`)
   } catch (err) {
     fastify.log.error(err)
     process.exit(1)
