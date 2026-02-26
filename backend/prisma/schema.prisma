@@ -118,6 +118,17 @@ model ExerciseRecord {
   // 轨迹数据
   trackPoints     String?                          // JSON array of GPS points
 
+  // 徒步特有字段
+  routeName       String?   @map("route_name")     // 路线名称
+  difficulty      String?                          // 难度等级: easy/moderate/hard/expert
+  avgSpeed        Float?    @map("avg_speed")      // 平均速度 km/h
+
+  // 羽毛球等球类特有字段
+  matchType       String?   @map("match_type")     // 对局类型: singles/doubles/mixed
+  gamesPlayed     Int?      @map("games_played")   // 对局数量
+  gamesWon        Int?      @map("games_won")      // 胜场数
+  venue           String?                          // 场地: indoor/outdoor
+
   // 关联
   planId       Int?       @map("plan_id")
   plan         ExercisePlan? @relation("PlanRecords", fields: [planId], references: [id])
