@@ -103,7 +103,7 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
-import { GridOptions, ModuleRegistry, createGrid } from 'ag-grid-community'
+import { ModuleRegistry, createGrid } from 'ag-grid-community'
 import { ClientSideRowModelModule } from 'ag-grid-community'
 import { CsvExportModule } from 'ag-grid-community'
 
@@ -168,7 +168,7 @@ const themeClass = computed(() => ({
 const totalRows = computed(() => props.rowData.length)
 
 // Grid 配置
-const gridOptions: GridOptions = {
+const gridOptions = {
   columnDefs: props.columnDefs,
   rowData: props.rowData,
   animateRows: true,
