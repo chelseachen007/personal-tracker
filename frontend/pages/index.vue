@@ -1,7 +1,7 @@
 <template>
   <div class="min-h-screen relative">
     <!-- Navigation -->
-    <nav class="sticky top-0 z-40 border-b border-slate-800/50 backdrop-blur-xl bg-slate-900/70">
+    <nav class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16">
           <!-- Logo & Nav -->
@@ -13,7 +13,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <span class="text-lg font-bold text-white tracking-tight">Tracker</span>
+                <span class="text-lg font-bold text-slate-800 tracking-tight">Tracker</span>
               </div>
             </div>
             <div class="hidden md:ml-8 md:flex md:space-x-1">
@@ -22,7 +22,7 @@
                 :key="item.name"
                 :to="item.to"
                 class="nav-link"
-                :class="[$route.path === item.to ? 'active text-emerald-400' : 'text-slate-400 hover:text-white']"
+                :class="[$route.path === item.to ? 'active text-emerald-600' : 'text-slate-500 hover:text-slate-800']"
               >
                 <component :is="item.icon" class="w-4 h-4 mr-2" />
                 {{ item.name }}
@@ -35,13 +35,13 @@
             <!-- Search -->
             <button
               @click="openSearch"
-              class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-slate-400 bg-slate-800/50 border border-slate-700/50 hover:bg-slate-700/50 hover:border-slate-600/50 transition-all duration-300"
+              class="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-slate-500 bg-slate-100 hover:bg-slate-200 transition-all duration-300"
             >
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
               <span>搜索</span>
-              <kbd class="px-2 py-0.5 text-xs rounded-lg bg-slate-700/50 text-slate-500 ml-2">⌘K</kbd>
+              <kbd class="px-2 py-0.5 text-xs rounded-lg bg-white text-slate-400 shadow-sm ml-2">⌘K</kbd>
             </button>
 
             <!-- User Menu -->
@@ -51,7 +51,7 @@
               </div>
               <button
                 @click="logout"
-                class="text-sm text-slate-400 hover:text-coral-400 transition-colors"
+                class="text-sm text-slate-500 hover:text-orange-500 transition-colors"
               >
                 退出
               </button>
@@ -68,10 +68,10 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- Header -->
       <div class="mb-8 animate-fade-in">
-        <h1 class="text-3xl font-bold text-white mb-2">
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">
           {{ greeting }}，<span class="gradient-text">{{ authStore.user?.username || '用户' }}</span>
         </h1>
-        <p class="text-slate-400">这是你的个人数据概览</p>
+        <p class="text-slate-500">这是你的个人数据概览</p>
       </div>
 
       <!-- Stats Grid -->
@@ -84,33 +84,33 @@
           :style="{ '--accent-color': stat.color }"
         >
           <div class="flex items-start justify-between mb-4">
-            <div class="p-2 rounded-xl" :class="stat.bgClass">
+            <div class="p-2.5 rounded-xl" :class="stat.bgClass">
               <component :is="stat.icon" class="w-5 h-5" :class="stat.iconClass" />
             </div>
-            <div class="text-xs text-slate-500">
-              <span :class="stat.trend > 0 ? 'text-emerald-400' : 'text-coral-400'">
+            <div class="text-xs text-slate-400">
+              <span :class="stat.trend > 0 ? 'text-emerald-500' : 'text-orange-500'">
                 {{ stat.trend > 0 ? '+' : '' }}{{ stat.trend }}%
               </span>
             </div>
           </div>
-          <div class="stat-number text-3xl text-white mb-1">{{ stat.value }}</div>
-          <div class="text-sm text-slate-400">{{ stat.label }}</div>
+          <div class="stat-number text-3xl text-slate-800 mb-1">{{ stat.value }}</div>
+          <div class="text-sm text-slate-500">{{ stat.label }}</div>
         </div>
       </div>
 
       <!-- Insights Card -->
       <div v-if="insights.length > 0" class="mb-8 animate-fade-in-up stagger-5">
         <div class="glass-card overflow-hidden">
-          <div class="p-6 bg-gradient-to-r from-emerald-500/10 via-cyan-500/5 to-transparent border-b border-slate-700/50">
+          <div class="p-6 bg-gradient-to-r from-emerald-50 to-cyan-50 border-b border-slate-100">
             <div class="flex items-center gap-3">
-              <div class="p-2 rounded-xl bg-emerald-500/20">
-                <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="p-2 rounded-xl bg-emerald-100">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                 </svg>
               </div>
               <div>
-                <h3 class="text-lg font-semibold text-white">今日洞察</h3>
-                <p class="text-sm text-slate-400">基于你的数据生成的智能建议</p>
+                <h3 class="text-lg font-semibold text-slate-800">今日洞察</h3>
+                <p class="text-sm text-slate-500">基于你的数据生成的智能建议</p>
               </div>
             </div>
           </div>
@@ -122,8 +122,8 @@
             >
               <div class="text-2xl">{{ insight.icon }}</div>
               <div class="flex-1 min-w-0">
-                <p class="font-medium text-white text-sm">{{ insight.title }}</p>
-                <p class="text-xs text-slate-400 mt-0.5 line-clamp-2">{{ insight.description }}</p>
+                <p class="font-medium text-slate-700 text-sm">{{ insight.title }}</p>
+                <p class="text-xs text-slate-500 mt-0.5 line-clamp-2">{{ insight.description }}</p>
               </div>
             </div>
           </div>
@@ -132,7 +132,7 @@
 
       <!-- Quick Actions -->
       <div class="mb-8 animate-fade-in-up stagger-6">
-        <h3 class="text-lg font-semibold text-white mb-4">快捷操作</h3>
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">快捷操作</h3>
         <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
           <NuxtLink
             v-for="action in quickActions"
@@ -143,32 +143,32 @@
             <div class="p-3 rounded-xl mb-3 transition-all duration-300" :class="action.bgClass">
               <component :is="action.icon" class="w-6 h-6" :class="action.iconClass" />
             </div>
-            <span class="text-sm text-slate-300 group-hover:text-white transition-colors">{{ action.name }}</span>
+            <span class="text-sm text-slate-600 group-hover:text-slate-800 transition-colors">{{ action.name }}</span>
           </NuxtLink>
         </div>
       </div>
 
       <!-- Active Goals -->
       <div v-if="activeGoals.length > 0" class="animate-fade-in-up stagger-6">
-        <h3 class="text-lg font-semibold text-white mb-4">活跃目标</h3>
+        <h3 class="text-lg font-semibold text-slate-800 mb-4">活跃目标</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div
             v-for="goal in activeGoals"
             :key="goal.id"
-            class="glass-card p-5 group hover:border-emerald-500/30 transition-all duration-300"
+            class="glass-card p-5 group hover:border-emerald-300 transition-all duration-300"
           >
             <div class="flex items-start justify-between mb-4">
               <div>
-                <h4 class="font-semibold text-white capitalize">{{ goal.goalType }}</h4>
-                <p class="text-sm text-slate-400 mt-1">
-                  目标：<span class="text-slate-300">{{ goal.targetValue }}</span>
+                <h4 class="font-semibold text-slate-700 capitalize">{{ goal.goalType }}</h4>
+                <p class="text-sm text-slate-500 mt-1">
+                  目标：<span class="text-slate-700">{{ goal.targetValue }}</span>
                 </p>
               </div>
               <div class="text-right">
                 <div class="text-2xl font-bold gradient-text">
                   {{ Math.round((goal.currentValue / goal.targetValue) * 100) }}%
                 </div>
-                <div class="text-xs text-slate-500 mt-1">
+                <div class="text-xs text-slate-400 mt-1">
                   {{ goal.currentValue }} / {{ goal.targetValue }}
                 </div>
               </div>
@@ -264,12 +264,12 @@ const navItems = [
 ]
 
 const quickActions = [
-  { name: '健康', to: '/health', icon: IconHealth, iconClass: 'text-emerald-400', bgClass: 'bg-emerald-500/20 group-hover:bg-emerald-500/30' },
-  { name: '餐食', to: '/meals', icon: IconMeal, iconClass: 'text-cyan-400', bgClass: 'bg-cyan-500/20 group-hover:bg-cyan-500/30' },
-  { name: '运动', to: '/exercise', icon: IconExercise, iconClass: 'text-purple-400', bgClass: 'bg-purple-500/20 group-hover:bg-purple-500/30' },
-  { name: '财务', to: '/finance', icon: IconFinance, iconClass: 'text-coral-400', bgClass: 'bg-coral-500/20 group-hover:bg-coral-500/30' },
-  { name: '心情', to: '/wellness', icon: IconWellness, iconClass: 'text-pink-400', bgClass: 'bg-pink-500/20 group-hover:bg-pink-500/30' },
-  { name: '分析', to: '/analytics', icon: IconAnalytics, iconClass: 'text-blue-400', bgClass: 'bg-blue-500/20 group-hover:bg-blue-500/30' }
+  { name: '健康', to: '/health', icon: IconHealth, iconClass: 'text-emerald-600', bgClass: 'bg-emerald-100 group-hover:bg-emerald-200' },
+  { name: '餐食', to: '/meals', icon: IconMeal, iconClass: 'text-cyan-600', bgClass: 'bg-cyan-100 group-hover:bg-cyan-200' },
+  { name: '运动', to: '/exercise', icon: IconExercise, iconClass: 'text-purple-600', bgClass: 'bg-purple-100 group-hover:bg-purple-200' },
+  { name: '财务', to: '/finance', icon: IconFinance, iconClass: 'text-orange-600', bgClass: 'bg-orange-100 group-hover:bg-orange-200' },
+  { name: '心情', to: '/wellness', icon: IconWellness, iconClass: 'text-pink-600', bgClass: 'bg-pink-100 group-hover:bg-pink-200' },
+  { name: '分析', to: '/analytics', icon: IconAnalytics, iconClass: 'text-blue-600', bgClass: 'bg-blue-100 group-hover:bg-blue-200' }
 ]
 
 const stats = computed(() => [
@@ -277,8 +277,8 @@ const stats = computed(() => [
     label: '健康记录',
     value: healthRecords.value.length,
     icon: IconHealth,
-    iconClass: 'text-emerald-400',
-    bgClass: 'bg-emerald-500/20',
+    iconClass: 'text-emerald-600',
+    bgClass: 'bg-emerald-100',
     color: '#10b981',
     trend: 12
   },
@@ -286,8 +286,8 @@ const stats = computed(() => [
     label: '餐食记录',
     value: mealRecords.value.length,
     icon: IconMeal,
-    iconClass: 'text-cyan-400',
-    bgClass: 'bg-cyan-500/20',
+    iconClass: 'text-cyan-600',
+    bgClass: 'bg-cyan-100',
     color: '#06b6d4',
     trend: 8
   },
@@ -295,8 +295,8 @@ const stats = computed(() => [
     label: '运动记录',
     value: exerciseRecords.value.length,
     icon: IconExercise,
-    iconClass: 'text-purple-400',
-    bgClass: 'bg-purple-500/20',
+    iconClass: 'text-purple-600',
+    bgClass: 'bg-purple-100',
     color: '#a855f7',
     trend: 15
   },
@@ -304,8 +304,8 @@ const stats = computed(() => [
     label: '交易记录',
     value: financeRecords.value.length,
     icon: IconFinance,
-    iconClass: 'text-coral-400',
-    bgClass: 'bg-coral-500/20',
+    iconClass: 'text-orange-600',
+    bgClass: 'bg-orange-100',
     color: '#f97316',
     trend: -3
   }

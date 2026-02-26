@@ -1,9 +1,9 @@
 <template>
-  <div class="min-h-screen bg-slate-950 text-slate-200 relative overflow-x-hidden">
+  <div class="min-h-screen bg-slate-50 text-slate-700 relative overflow-x-hidden">
     <!-- Mesh Background -->
     <div class="mesh-bg"></div>
-    <!-- Noise Texture -->
-    <div class="noise-overlay"></div>
+    <!-- Pattern Overlay -->
+    <div class="pattern-overlay"></div>
 
     <!-- Main Content -->
     <NuxtPage />
@@ -13,14 +13,13 @@
 <script setup>
 useHead({
   htmlAttrs: {
-    lang: 'zh-CN',
-    class: 'dark'
+    lang: 'zh-CN'
   },
   meta: [
     { charset: 'utf-8' },
     { name: 'viewport', content: 'width=device-width, initial-scale=1' },
     { name: 'description', content: '个人数据追踪器 - 追踪您的健康、饮食、运动和财务数据' },
-    { name: 'theme-color', content: '#0f172a' },
+    { name: 'theme-color', content: '#10b981' },
   ],
   link: [
     { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
