@@ -14,7 +14,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h1 class="text-2xl font-bold text-white">健康与心情</h1>
+            <h1 class="text-2xl font-bold text-slate-800">健康与心情</h1>
           </div>
           <p class="text-slate-400 ml-13">追踪您的睡眠质量和每日心情</p>
         </div>
@@ -51,8 +51,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ sleepStats.avgDuration || '--' }}<span class="text-lg text-slate-500 ml-1">h</span></div>
-          <div class="text-sm text-slate-400">平均睡眠</div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ sleepStats.avgDuration || '--' }}<span class="text-lg text-slate-500 ml-1">h</span></div>
+          <div class="text-sm text-slate-500">平均睡眠</div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-2" style="--accent-color: #0ea5e9">
@@ -63,8 +63,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ sleepStats.avgQuality || '--' }}</div>
-          <div class="text-sm text-slate-400">睡眠质量 <span class="text-slate-500">(1-5)</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ sleepStats.avgQuality || '--' }}</div>
+          <div class="text-sm text-slate-500">睡眠质量 <span class="text-slate-400">(1-5)</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-3" style="--accent-color: #a855f7">
@@ -75,8 +75,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ moodStats.avgMood || '--' }}</div>
-          <div class="text-sm text-slate-400">平均心情 <span class="text-slate-500">(1-5)</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ moodStats.avgMood || '--' }}</div>
+          <div class="text-sm text-slate-500">平均心情 <span class="text-slate-400">(1-5)</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-4" style="--accent-color: #10b981">
@@ -87,8 +87,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ moodStats.avgEnergy || '--' }}</div>
-          <div class="text-sm text-slate-400">平均精力 <span class="text-slate-500">(1-5)</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ moodStats.avgEnergy || '--' }}</div>
+          <div class="text-sm text-slate-500">平均精力 <span class="text-slate-400">(1-5)</span></div>
         </div>
       </div>
 
@@ -100,7 +100,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
             </svg>
           </div>
-          <h3 class="text-lg font-semibold text-white">睡眠与心情关联</h3>
+          <h3 class="text-lg font-semibold text-slate-800">睡眠与心情关联</h3>
         </div>
         <div class="flex items-center gap-8">
           <div>
@@ -147,7 +147,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-white">记录今日心情</h3>
+            <h3 class="text-lg font-semibold text-slate-800">记录今日心情</h3>
           </div>
 
           <form @submit.prevent="submitMood" class="space-y-6">
@@ -236,7 +236,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-white">记录睡眠</h3>
+            <h3 class="text-lg font-semibold text-slate-800">记录睡眠</h3>
           </div>
 
           <form @submit.prevent="submitSleep" class="space-y-6">
@@ -317,7 +317,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- Sleep Records -->
         <div class="glass-card p-6 animate-fade-in-up stagger-5">
-          <h3 class="text-lg font-semibold text-white mb-4">最近睡眠</h3>
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">最近睡眠</h3>
           <div v-if="sleepRecords.length === 0" class="text-center py-12">
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800/50 flex items-center justify-center">
               <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -336,8 +336,8 @@
                   </svg>
                 </div>
                 <div>
-                  <div class="font-medium text-white">{{ formatDate(record.sleepDate) }}</div>
-                  <div class="text-sm text-slate-400">{{ record.durationHours }}h · 质量 {{ record.quality || '-' }}</div>
+                  <div class="font-medium text-slate-700">{{ formatDate(record.sleepDate) }}</div>
+                  <div class="text-sm text-slate-500">{{ record.durationHours }}h · 质量 {{ record.quality || '-' }}</div>
                 </div>
               </div>
               <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -358,7 +358,7 @@
 
         <!-- Mood Records -->
         <div class="glass-card p-6 animate-fade-in-up stagger-6">
-          <h3 class="text-lg font-semibold text-white mb-4">最近心情</h3>
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">最近心情</h3>
           <div v-if="moodRecords.length === 0" class="text-center py-12">
             <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-slate-800/50 flex items-center justify-center">
               <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -375,8 +375,8 @@
                   {{ moodEmojis[record.mood - 1] }}
                 </div>
                 <div>
-                  <div class="font-medium text-white">{{ formatDate(record.recordDate) }}</div>
-                  <div class="text-sm text-slate-400">精力 {{ record.energy || '-' }} · 压力 {{ record.stress || '-' }}</div>
+                  <div class="font-medium text-slate-700">{{ formatDate(record.recordDate) }}</div>
+                  <div class="text-sm text-slate-500">精力 {{ record.energy || '-' }} · 压力 {{ record.stress || '-' }}</div>
                 </div>
               </div>
               <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

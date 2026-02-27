@@ -14,7 +14,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <h1 class="text-2xl font-bold text-white">运动记录</h1>
+            <h1 class="text-2xl font-bold text-slate-800">运动记录</h1>
           </div>
           <p class="text-slate-400 ml-13">追踪您的锻炼和身体活动</p>
         </div>
@@ -50,8 +50,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ stats.totalDuration }}</div>
-          <div class="text-sm text-slate-400">总时长 <span class="text-slate-500">分钟</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ stats.totalDuration }}</div>
+          <div class="text-sm text-slate-500">总时长 <span class="text-slate-400">分钟</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-2" style="--accent-color: #f97316">
@@ -62,8 +62,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ stats.totalCalories }}</div>
-          <div class="text-sm text-slate-400">总消耗 <span class="text-slate-500">kcal</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ stats.totalCalories }}</div>
+          <div class="text-sm text-slate-500">总消耗 <span class="text-slate-400">kcal</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-3" style="--accent-color: #10b981">
@@ -74,8 +74,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ stats.totalDistance }}</div>
-          <div class="text-sm text-slate-400">总距离 <span class="text-slate-500">km</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ stats.totalDistance }}</div>
+          <div class="text-sm text-slate-500">总距离 <span class="text-slate-400">km</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-4" style="--accent-color: #3b82f6">
@@ -86,8 +86,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ stats.monthlyDuration }}</div>
-          <div class="text-sm text-slate-400">本月 <span class="text-slate-500">分钟</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ stats.monthlyDuration }}</div>
+          <div class="text-sm text-slate-500">本月 <span class="text-slate-400">分钟</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-5" style="--accent-color: #ec4899">
@@ -98,8 +98,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ records.length }}</div>
-          <div class="text-sm text-slate-400">运动次数</div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ records.length }}</div>
+          <div class="text-sm text-slate-500">运动次数</div>
         </div>
       </div>
 
@@ -132,7 +132,7 @@
               </svg>
             </div>
             <div>
-              <h3 class="text-lg font-semibold text-white">导入运动轨迹</h3>
+              <h3 class="text-lg font-semibold text-slate-800">导入运动轨迹</h3>
               <p class="text-sm text-slate-400">支持 KML、GPX、TCX 格式</p>
             </div>
           </div>
@@ -154,7 +154,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-white">添加运动记录</h3>
+            <h3 class="text-lg font-semibold text-slate-800">添加运动记录</h3>
           </div>
 
           <form @submit.prevent="submitForm" class="space-y-6">
@@ -339,13 +339,13 @@
       <div v-if="activeTab === 'records'" class="space-y-6">
         <!-- Heatmap -->
         <div class="glass-card p-6 animate-fade-in-up">
-          <h3 class="text-lg font-semibold text-white mb-4">运动日历</h3>
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">运动日历</h3>
           <ExerciseHeatmap />
         </div>
 
         <!-- Personal Bests -->
         <div class="glass-card p-6 animate-fade-in-up">
-          <h3 class="text-lg font-semibold text-white mb-4">个人最佳</h3>
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">个人最佳</h3>
           <PersonalBests />
         </div>
 

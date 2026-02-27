@@ -8,7 +8,7 @@
       <!-- Back Button -->
       <button
         @click="goBack"
-        class="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors animate-fade-in"
+        class="flex items-center gap-2 text-slate-500 hover:text-slate-800 mb-6 transition-colors animate-fade-in"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -19,7 +19,7 @@
       <!-- Loading -->
       <div v-if="loading" class="flex flex-col items-center justify-center py-24">
         <div class="w-12 h-12 border-4 border-slate-700 border-t-emerald-500 rounded-full animate-spin"></div>
-        <p class="mt-4 text-slate-400">加载中...</p>
+        <p class="mt-4 text-slate-500">加载中...</p>
       </div>
 
       <!-- Error -->
@@ -45,7 +45,7 @@
                 </div>
                 <div>
                   <div class="flex items-center gap-3 mb-1">
-                    <span class="text-2xl font-bold text-white">{{ exerciseTypeMap[record.exerciseType] || record.exerciseType }}</span>
+                    <span class="text-2xl font-bold text-slate-800">{{ exerciseTypeMap[record.exerciseType] || record.exerciseType }}</span>
                     <span v-if="record.routeName" class="text-slate-400">· {{ record.routeName }}</span>
                   </div>
                   <div class="text-slate-400">{{ formatDate(record.exerciseDate) }}</div>
@@ -71,7 +71,7 @@
                 </svg>
                 <span class="text-xs text-slate-500 uppercase tracking-wider">时长</span>
               </div>
-              <div class="stat-number text-3xl text-white">{{ formatDuration(record.durationMinutes) }}</div>
+              <div class="stat-number text-3xl text-slate-800">{{ formatDuration(record.durationMinutes) }}</div>
             </div>
 
             <div class="p-6">
@@ -81,7 +81,7 @@
                 </svg>
                 <span class="text-xs text-slate-500 uppercase tracking-wider">距离</span>
               </div>
-              <div class="stat-number text-3xl text-white">{{ record.distanceKm ? `${record.distanceKm} km` : '-' }}</div>
+              <div class="stat-number text-3xl text-slate-800">{{ record.distanceKm ? `${record.distanceKm} km` : '-' }}</div>
             </div>
 
             <div class="p-6">
@@ -91,7 +91,7 @@
                 </svg>
                 <span class="text-xs text-slate-500 uppercase tracking-wider">消耗</span>
               </div>
-              <div class="stat-number text-3xl text-white">{{ record.caloriesBurned ? `${record.caloriesBurned}` : '-' }}</div>
+              <div class="stat-number text-3xl text-slate-800">{{ record.caloriesBurned ? `${record.caloriesBurned}` : '-' }}</div>
               <div class="text-xs text-slate-500">kcal</div>
             </div>
 
@@ -102,7 +102,7 @@
                 </svg>
                 <span class="text-xs text-slate-500 uppercase tracking-wider">配速</span>
               </div>
-              <div class="stat-number text-3xl text-white">{{ record.avgPace ? formatPace(record.avgPace) : '-' }}</div>
+              <div class="stat-number text-3xl text-slate-800">{{ record.avgPace ? formatPace(record.avgPace) : '-' }}</div>
               <div v-if="record.avgPace" class="text-xs text-slate-500">/km</div>
             </div>
           </div>
@@ -112,7 +112,7 @@
         <div v-if="record.exerciseType === 'hiking'" class="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in-up">
           <!-- Elevation Card -->
           <div class="glass-card p-6">
-            <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
               <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
               </svg>
@@ -121,26 +121,26 @@
             <div class="grid grid-cols-2 gap-4">
               <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
                 <div class="text-sm text-emerald-400 mb-1">累计爬升</div>
-                <div class="text-2xl font-bold text-white">{{ record.totalClimb ? `${record.totalClimb} m` : '-' }}</div>
+                <div class="text-2xl font-bold text-slate-800">{{ record.totalClimb ? `${record.totalClimb} m` : '-' }}</div>
               </div>
               <div class="p-4 rounded-xl bg-red-500/10 border border-red-500/20">
                 <div class="text-sm text-red-400 mb-1">累计下降</div>
-                <div class="text-2xl font-bold text-white">{{ record.totalDescent ? `${record.totalDescent} m` : '-' }}</div>
+                <div class="text-2xl font-bold text-slate-800">{{ record.totalDescent ? `${record.totalDescent} m` : '-' }}</div>
               </div>
               <div class="p-4 rounded-xl bg-slate-800/50">
                 <div class="text-sm text-slate-400 mb-1">最高海拔</div>
-                <div class="text-2xl font-bold text-white">{{ record.maxElevation ? `${record.maxElevation} m` : '-' }}</div>
+                <div class="text-2xl font-bold text-slate-800">{{ record.maxElevation ? `${record.maxElevation} m` : '-' }}</div>
               </div>
               <div class="p-4 rounded-xl bg-slate-800/50">
                 <div class="text-sm text-slate-400 mb-1">最低海拔</div>
-                <div class="text-2xl font-bold text-white">{{ record.minElevation ? `${record.minElevation} m` : '-' }}</div>
+                <div class="text-2xl font-bold text-slate-800">{{ record.minElevation ? `${record.minElevation} m` : '-' }}</div>
               </div>
             </div>
           </div>
 
           <!-- Route Info -->
           <div class="glass-card p-6">
-            <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
               <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
@@ -148,18 +148,18 @@
             </h3>
             <div class="space-y-4">
               <div class="flex justify-between items-center py-3 border-b border-slate-700/50">
-                <span class="text-slate-400">路线名称</span>
-                <span class="text-white font-medium">{{ record.routeName || '-' }}</span>
+                <span class="text-slate-500">路线名称</span>
+                <span class="text-slate-800 font-medium">{{ record.routeName || '-' }}</span>
               </div>
               <div class="flex justify-between items-center py-3 border-b border-slate-700/50">
-                <span class="text-slate-400">难度等级</span>
+                <span class="text-slate-500">难度等级</span>
                 <span class="px-3 py-1 rounded-lg text-sm font-medium" :class="getDifficultyClass(record.difficulty)">
                   {{ getDifficultyLabel(record.difficulty) }}
                 </span>
               </div>
               <div class="flex justify-between items-center py-3">
-                <span class="text-slate-400">平均速度</span>
-                <span class="text-white font-medium">{{ record.avgSpeed ? `${record.avgSpeed} km/h` : '-' }}</span>
+                <span class="text-slate-500">平均速度</span>
+                <span class="text-slate-800 font-medium">{{ record.avgSpeed ? `${record.avgSpeed} km/h` : '-' }}</span>
               </div>
             </div>
           </div>
@@ -167,33 +167,33 @@
 
         <!-- Badminton Specific -->
         <div v-if="record.exerciseType === 'badminton'" class="glass-card p-6 animate-fade-in-up">
-          <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <h3 class="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <span class="text-2xl">🏸</span>
             对局数据
           </h3>
           <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div class="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/20">
               <div class="text-sm text-cyan-400 mb-1">对局类型</div>
-              <div class="text-xl font-bold text-white">{{ getMatchTypeLabel(record.matchType) }}</div>
+              <div class="text-xl font-bold text-slate-800">{{ getMatchTypeLabel(record.matchType) }}</div>
             </div>
             <div class="p-4 rounded-xl bg-slate-800/50">
               <div class="text-sm text-slate-400 mb-1">对局数量</div>
-              <div class="text-xl font-bold text-white">{{ record.gamesPlayed || '-' }} 场</div>
+              <div class="text-xl font-bold text-slate-800">{{ record.gamesPlayed || '-' }} 场</div>
             </div>
             <div class="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
               <div class="text-sm text-emerald-400 mb-1">胜场</div>
-              <div class="text-xl font-bold text-white">{{ record.gamesWon || '-' }} 场</div>
+              <div class="text-xl font-bold text-slate-800">{{ record.gamesWon || '-' }} 场</div>
             </div>
             <div class="p-4 rounded-xl bg-slate-800/50">
               <div class="text-sm text-slate-400 mb-1">场地</div>
-              <div class="text-xl font-bold text-white">{{ record.venue === 'indoor' ? '室内' : '室外' }}</div>
+              <div class="text-xl font-bold text-slate-800">{{ record.venue === 'indoor' ? '室内' : '室外' }}</div>
             </div>
           </div>
         </div>
 
         <!-- RPE Rating -->
         <div v-if="record.rpe" class="glass-card p-6 animate-fade-in-up">
-          <h3 class="text-lg font-semibold text-white mb-4">感受评分</h3>
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">感受评分</h3>
           <div class="flex items-center gap-8">
             <div class="text-center">
               <div class="text-5xl font-bold mb-2" :class="getRPEColorClass(record.rpe)">{{ record.rpe }}</div>
@@ -224,34 +224,34 @@
 
         <!-- Weather -->
         <div v-if="record.weatherCondition || record.temperature" class="glass-card p-6 animate-fade-in-up">
-          <h3 class="text-lg font-semibold text-white mb-4">天气状况</h3>
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">天气状况</h3>
           <div class="flex flex-wrap gap-4">
             <div v-if="record.weatherCondition" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50">
               <span class="text-3xl">{{ getWeatherIcon(record.weatherCondition) }}</span>
               <div>
                 <div class="text-xs text-slate-500">天气</div>
-                <div class="text-lg font-medium text-white">{{ record.weatherCondition }}</div>
+                <div class="text-lg font-medium text-slate-800">{{ record.weatherCondition }}</div>
               </div>
             </div>
             <div v-if="record.temperature" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50">
               <span class="text-3xl">🌡️</span>
               <div>
                 <div class="text-xs text-slate-500">温度</div>
-                <div class="text-lg font-medium text-white">{{ record.temperature }}°C</div>
+                <div class="text-lg font-medium text-slate-800">{{ record.temperature }}°C</div>
               </div>
             </div>
             <div v-if="record.humidity" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50">
               <span class="text-3xl">💧</span>
               <div>
                 <div class="text-xs text-slate-500">湿度</div>
-                <div class="text-lg font-medium text-white">{{ record.humidity }}%</div>
+                <div class="text-lg font-medium text-slate-800">{{ record.humidity }}%</div>
               </div>
             </div>
             <div v-if="record.windSpeed" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-slate-800/50">
               <span class="text-3xl">💨</span>
               <div>
                 <div class="text-xs text-slate-500">风速</div>
-                <div class="text-lg font-medium text-white">{{ record.windSpeed }} km/h</div>
+                <div class="text-lg font-medium text-slate-800">{{ record.windSpeed }} km/h</div>
               </div>
             </div>
           </div>
@@ -260,7 +260,7 @@
         <!-- Track Map -->
         <div v-if="trackPoints && trackPoints.length > 0" class="glass-card overflow-hidden animate-fade-in-up">
           <div class="p-6 border-b border-slate-700/50">
-            <h3 class="text-lg font-semibold text-white flex items-center gap-2">
+            <h3 class="text-lg font-semibold text-slate-800 flex items-center gap-2">
               <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
               </svg>
@@ -282,8 +282,8 @@
 
         <!-- Notes -->
         <div v-if="record.notes" class="glass-card p-6 animate-fade-in-up">
-          <h3 class="text-lg font-semibold text-white mb-4">备注</h3>
-          <p class="text-slate-300 whitespace-pre-wrap">{{ record.notes }}</p>
+          <h3 class="text-lg font-semibold text-slate-800 mb-4">备注</h3>
+          <p class="text-slate-600 whitespace-pre-wrap">{{ record.notes }}</p>
         </div>
       </div>
     </div>

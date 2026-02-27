@@ -322,10 +322,12 @@ function handleKeydownGlobal(event: KeyboardEvent) {
 
 onMounted(() => {
   document.addEventListener('keydown', handleKeydownGlobal)
+  window.addEventListener('open-global-search', open)
 })
 
 onBeforeUnmount(() => {
   document.removeEventListener('keydown', handleKeydownGlobal)
+  window.removeEventListener('open-global-search', open)
   if (searchTimeout.value) {
     clearTimeout(searchTimeout.value)
   }

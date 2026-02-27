@@ -5,12 +5,43 @@
     <!-- Pattern Overlay -->
     <div class="pattern-overlay"></div>
 
+    <!-- Global Navigation - hidden on login and auth pages -->
+    <AppNav v-if="showNav" />
+
+    <!-- Global Search -->
+    <GlobalSearch ref="globalSearchRef" />
+
     <!-- Main Content -->
     <NuxtPage />
   </div>
 </template>
 
 <script setup>
+const route = useRoute()
+const globalSearchRef = ref()
+
+// Don't show nav on login and auth callback pages
+const showNav = computed(() => {
+  const hiddenRoutes = ['/login', '/auth/callback']
+  return !hiddenRoutes.includes(route.path)
+})
+
+// Provide a way to open global search
+provide('globalSearch', {
+  open: () => globalSearchRef.value?.open()
+})
+
+// Listen for custom event to open search
+onMounted(() => {
+  window.addEventListener('open-global-search', () => {
+    globalSearchRef.value?.open()
+  })
+})
+
+onUnmounted(() => {
+  window.removeEventListener('open-global-search', () => {})
+})
+
 useHead({
   htmlAttrs: {
     lang: 'zh-CN'

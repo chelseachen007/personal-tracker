@@ -14,7 +14,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </div>
-            <h1 class="text-2xl font-bold text-white">健康记录</h1>
+            <h1 class="text-2xl font-bold text-slate-800">健康记录</h1>
           </div>
           <p class="text-slate-400 ml-13">追踪您的体重、血压和健康指标</p>
         </div>
@@ -39,8 +39,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ stats.latestWeight || '--' }}</div>
-          <div class="text-sm text-slate-400">最新体重 <span class="text-slate-500">kg</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ stats.latestWeight || '--' }}</div>
+          <div class="text-sm text-slate-500">最新体重 <span class="text-slate-400">kg</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-2" style="--accent-color: #10b981">
@@ -51,8 +51,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ stats.avgWeight || '--' }}</div>
-          <div class="text-sm text-slate-400">平均体重 <span class="text-slate-500">kg</span></div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ stats.avgWeight || '--' }}</div>
+          <div class="text-sm text-slate-500">平均体重 <span class="text-slate-400">kg</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-3" style="--accent-color: #f97316">
@@ -63,10 +63,10 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">
+          <div class="stat-number text-2xl text-slate-800 mb-1">
             {{ stats.avgBP ? `${stats.avgBP.systolic}/${stats.avgBP.diastolic}` : '--/--' }}
           </div>
-          <div class="text-sm text-slate-400">平均血压 <span class="text-slate-500">mmHg</span></div>
+          <div class="text-sm text-slate-500">平均血压 <span class="text-slate-400">mmHg</span></div>
         </div>
 
         <div class="stat-card animate-fade-in-up stagger-4" style="--accent-color: #a855f7">
@@ -77,8 +77,8 @@
               </svg>
             </div>
           </div>
-          <div class="stat-number text-2xl text-white mb-1">{{ records.length }}</div>
-          <div class="text-sm text-slate-400">总记录数</div>
+          <div class="stat-number text-2xl text-slate-800 mb-1">{{ records.length }}</div>
+          <div class="text-sm text-slate-500">总记录数</div>
         </div>
       </div>
 
@@ -96,7 +96,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <h3 class="text-lg font-semibold text-white">添加健康记录</h3>
+            <h3 class="text-lg font-semibold text-slate-800">添加健康记录</h3>
           </div>
 
           <form @submit.prevent="submitForm" class="space-y-6">
